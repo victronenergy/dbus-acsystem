@@ -17,8 +17,9 @@ sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'aiovelib'))
 from aiovelib.service import Service as _Service
 from aiovelib.service import IntegerItem, TextItem
 from aiovelib.client import Service as Client
-from aiovelib.client import ServiceHandler as ClientHandler
 from aiovelib.client import Monitor
+from aiovelib.localsettings import SettingsService as SettingsClient
+from aiovelib.localsettings import Setting, SETTINGS_SERVICE
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -26,11 +27,13 @@ logger.setLevel(logging.INFO)
 class Service(_Service):
 	def __init__(self, bus, name, service):
 		super().__init__(bus, name)
+		self.systeminstance = service.systeminstance
 		self.subservices = { service }
+		self.settings = None
 
 		# Compulsory paths
 		self.add_item(IntegerItem("/DeviceInstance",
-			512 if service.systeminstance is None else service.systeminstance))
+			512 if self.systeminstance is None else self.systeminstance))
 		self.add_item(TextItem("/Mgmt/ProcessName", __file__))
 		self.add_item(TextItem("/Mgmt/ProcessVersion", VERSION))
 		self.add_item(TextItem("/Mgmt/Connection", "local"))
@@ -64,7 +67,30 @@ class Service(_Service):
 	def remove_service(self, service):
 		self.subservices.discard(service)
 
-class RsService(Client, ClientHandler):
+	async def wait_for_settings(self):
+		""" Attempt a connection to localsettings. """
+		settingsmonitor = await SettingsMonitor.create(self.bus)
+		self.settings = await asyncio.wait_for(
+			settingsmonitor.wait_for_service(SETTINGS_SERVICE), 5)
+		await self.settings.add_settings(
+			Setting("/Settings/AcSystem/{}/AcPowerSetpoint".format(
+				self.systeminstance), 0, alias="acpowersetpoint"),
+			Setting("/Settings/AcSystem/{}/MultiPhaseRegulation".format(
+				self.systeminstance), 0, 0, 1, alias="multiphaseregulation")
+		)
+
+	@property
+	def acpowersetpoint(self):
+		return self.settings.get_value(
+			self.settings.alias("acpowersetpoint"))
+
+	@property
+	def multiphaseregulation(self):
+		return self.settings.get_value(
+			self.settings.alias("multiphaseregulation"))
+
+
+class RsService(Client):
 	servicetype = "com.victronenergy.multi"
 	paths = {
 		"/ProductId",
@@ -114,8 +140,10 @@ class SystemMonitor(Monitor):
 		"/Settings/Ess/Mode"
 	)
 
-	def __init__(self, bus, make_bus, *args, **kwargs):
-		super().__init__(bus, *args, **kwargs)
+	def __init__(self, bus, make_bus):
+		super().__init__(bus, handlers = {
+			'com.victronenergy.multi': RsService
+		})
 		self._leaders = {}
 		self._make_bus = make_bus
 
@@ -141,8 +169,8 @@ class SystemMonitor(Monitor):
 				s["/Settings/Ess/MinimumSoc"] = service.minsoc
 				s["/Settings/Ess/Mode"] = service.mode
 
-			# Register on dbus
-			await leader.register()
+			# Register on dbus, connect to localsettings
+			await asyncio.gather(leader.register(), leader.wait_for_settings())
 			self._leaders[instance].set_result(leader)
 	
 	async def serviceRemoved(self, service):
@@ -168,10 +196,15 @@ class SystemMonitor(Monitor):
 					if s is not service:
 						if s.get_value(p) != v:
 							s.set_value(p, v)
-
 				if leader.get_item(p).value != v:
 					with leader as s:
 						s[p] = v
+
+class SettingsMonitor(Monitor):
+	def __init__(self, bus):
+		super().__init__(bus, handlers = {
+			'com.victronenergy.settings': SettingsClient
+		})
 
 async def calculation_loop(monitor):
 	while True:
