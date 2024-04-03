@@ -7,6 +7,7 @@ import os
 import asyncio
 import logging
 from argparse import ArgumentParser
+from collections import defaultdict
 
 # 3rd party
 from dbus_next.aio import MessageBus
@@ -15,7 +16,7 @@ from dbus_next.constants import BusType
 # aiovelib
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'aiovelib'))
 from aiovelib.service import Service as _Service
-from aiovelib.service import IntegerItem, TextItem
+from aiovelib.service import IntegerItem, TextItem, DoubleItem
 from aiovelib.client import Service as Client
 from aiovelib.client import Monitor
 from aiovelib.localsettings import SettingsService as SettingsClient
@@ -23,6 +24,10 @@ from aiovelib.localsettings import Setting, SETTINGS_SERVICE
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+def safe_add(*args):
+	args = [x for x in args if x is not None]
+	return sum(args) if args else None
 
 class Service(_Service):
 	def __init__(self, bus, name, service):
@@ -38,6 +43,17 @@ class Service(_Service):
 		self.add_item(TextItem("/Mgmt/ProcessVersion", VERSION))
 		self.add_item(TextItem("/Mgmt/Connection", "local"))
 		self.add_item(IntegerItem("/Connected", 1))
+
+		# AC summary
+		self.add_item(IntegerItem("/Ac/NumberOfAcInputs", None))
+		self.add_item(IntegerItem("/Ac/NumberOfPhases", None))
+		for phase in range(1, 4):
+			for inp in range(1, 3):
+				self.add_item(IntegerItem(f"/Ac/In/{inp}/L{phase}/P", None))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/I", None))
+
+			self.add_item(IntegerItem(f"/Ac/Out/L{phase}/P", None))
+			self.add_item(IntegerItem(f"/Ac/Out/L{phase}/I", None))
 
 		# Control points
 		self.add_item(IntegerItem("/Settings/Ess/MinimumSoc", None,
@@ -95,7 +111,12 @@ class RsService(Client):
 	paths = {
 		"/ProductId",
 		"/DeviceInstance",
-		"/Ac/In/1/L1/P",
+		"/Ac/In/1/L1/P", "/Ac/In/2/L1/P", "/Ac/Out/L1/P",
+		"/Ac/In/1/L2/P", "/Ac/In/2/L2/P", "/Ac/Out/L2/P",
+		"/Ac/In/1/L3/P", "/Ac/In/2/L3/P", "/Ac/Out/L3/P",
+		"/Ac/In/1/L1/I", "/Ac/In/2/L1/I", "/Ac/Out/L1/I",
+		"/Ac/In/1/L2/I", "/Ac/In/2/L2/I", "/Ac/Out/L2/I",
+		"/Ac/In/1/L3/I", "/Ac/In/2/L3/I", "/Ac/Out/L3/I",
 		"/N2kSystemInstance",
 		"/Settings/Ess/MinimumSoc",
 		"/Settings/Ess/Mode",
@@ -217,8 +238,34 @@ class SettingsMonitor(Monitor):
 
 async def calculation_loop(monitor):
 	while True:
-		#for service in monitor.services:
-		#	print ("name =", service.name)
+		for leader in monitor.leaders:
+			# Sum power and current values over all units in the system
+			values = defaultdict(lambda: None)
+			for service in leader.subservices:
+				for phase in range(1, 4):
+					for inp in range(1, 3):
+						b = f"/Ac/In/{inp}/L{phase}/"
+						for p in (b + "P", b + "I"):
+							values[p] = safe_add(values[p], service.get_value(p))
+
+					b = f"/Ac/Out/L{phase}/"
+					for p in (b + "P", b + "I"):
+						values[p] = safe_add(values[p], service.get_value(p))
+
+			# Number of inputs/phases
+			has_input1 = any(values[f"/Ac/In/1/L{x}/P"] is not None 
+				for x in range (1, 4))
+			has_input2 = any(values[f"/Ac/In/2/L{x}/P"] is not None 
+				for x in range (1, 4))
+			values["/Ac/NumberOfAcInputs"] = int(has_input1) + int (has_input2)
+
+			# Number of phases, we will use the outputs to detect that
+			values["/Ac/NumberOfPhases"] = sum(int(values[f"/Ac/Out/L{x}/P"] is not None) for x in range(1, 4))
+
+			with leader as s:
+				for p, v in values.items():
+					s[p] = v
+
 		await asyncio.sleep(1)
 
 async def settings_loop(monitor):
