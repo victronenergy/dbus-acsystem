@@ -174,17 +174,22 @@ class SystemMonitor(Monitor):
 			self._leaders[instance].set_result(leader)
 	
 	async def serviceRemoved(self, service):
-		try:
-			leader = await self._leaders[service.systeminstance]
-		except KeyError:
-			pass
-		else:
+		for leader in list(self.leaders):
 			leader.remove_service(service)
 			if not leader.subservices:
 				leader.__del__()
-				del self._leaders[service.systeminstance]
+				del self._leaders[leader.systeminstance]
+
+	async def change_systeminstance(self, service):
+		await self.serviceRemoved(service)
+		await self.serviceAdded(service)
 
 	def itemsChanged(self, service, values):
+		# If the N2kSystemInstance changes, remove and add the service
+		# again so it ends up in the right system.
+		if '/N2kSystemInstance' in values.keys():
+			asyncio.create_task(self.change_systeminstance(service))
+			return
 		try:
 			leader = self._leaders[service.systeminstance].result()
 		except (KeyError, asyncio.InvalidStateError):
@@ -199,6 +204,10 @@ class SystemMonitor(Monitor):
 				if leader.get_item(p).value != v:
 					with leader as s:
 						s[p] = v
+
+	@property
+	def leaders(self):
+		return iter(s.result() for s in self._leaders.values() if s.done())
 
 class SettingsMonitor(Monitor):
 	def __init__(self, bus):
