@@ -170,6 +170,9 @@ class SystemMonitor(Monitor):
 
 	async def serviceAdded(self, service):
 		instance = service.systeminstance
+		if instance is None:
+			return # Firmware is old, or it is still starting up
+
 		if instance in self._leaders:
 			leader = await self._leaders[instance]
 			leader.add_service(service)
