@@ -19,6 +19,8 @@ from aiovelib.service import Service as _Service
 from aiovelib.service import IntegerItem, TextItem, DoubleItem
 from aiovelib.client import Service as Client
 from aiovelib.client import Monitor
+from aiovelib.localsettings import SettingsService as SettingsClient
+from aiovelib.localsettings import Setting, SETTINGS_SERVICE
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -32,6 +34,7 @@ class Service(_Service):
 		super().__init__(bus, name)
 		self.systeminstance = service.systeminstance
 		self.subservices = { service }
+		self.settings = None
 
 		# Compulsory paths
 		self.add_item(IntegerItem("/DeviceInstance",
@@ -51,6 +54,10 @@ class Service(_Service):
 
 			self.add_item(IntegerItem(f"/Ac/Out/L{phase}/P", None))
 			self.add_item(IntegerItem(f"/Ac/Out/L{phase}/I", None))
+
+		# Custom Name
+		self.add_item(TextItem("/CustomName", None,
+			writeable=True, onchange=self._set_customname))
 
 		# Control points
 		self.add_item(IntegerItem("/Settings/Ess/MinimumSoc", None,
@@ -86,6 +93,12 @@ class Service(_Service):
 				service.setpoint = setpoint
 		return True
 
+	def _set_customname(self, v):
+		cn = self.settings.get_value(self.settings.alias("customname"))
+		if cn != v:
+			self.settings.set_value(self.settings.alias("customname"), v)
+		return True
+
 	@property
 	def acpowersetpoint(self):
 		return self.get_item("/Ess/AcPowerSetpoint").value
@@ -95,6 +108,36 @@ class Service(_Service):
 	
 	def remove_service(self, service):
 		self.subservices.discard(service)
+
+	async def wait_for_settings(self):
+		""" Attempt a connection to localsettings. """
+		settingsmonitor = await SettingsMonitor.create(self.bus,
+			itemsChanged=self.itemsChanged)
+		self.settings = await asyncio.wait_for(
+			settingsmonitor.wait_for_service(SETTINGS_SERVICE), 5)
+		await self.settings.add_settings(
+			Setting("/Settings/AcSystem/{}/Customname".format(
+				self.systeminstance), "", alias="customname"),
+		)
+
+	async def init(self):
+		await self.wait_for_settings()
+		self.customname = self.settings.get_value(
+			self.settings.alias("customname"))
+
+	def itemsChanged(self, service, values):
+		try:
+			self.customname = values[self.settings.alias('customname')]
+		except KeyError:
+			pass # Not a customname change
+
+	@property
+	def customname(self):
+		return self.get_item("/Customname").value
+
+	@customname.setter
+	def customname(self, v):
+		self.get_item("/CustomName").set_value(v)
 
 class RsService(Client):
 	servicetype = "com.victronenergy.multi"
@@ -184,7 +227,7 @@ class SystemMonitor(Monitor):
 				s["/Settings/Ess/Mode"] = service.mode
 
 			# Register on dbus, connect to localsettings
-			await leader.register()
+			await asyncio.gather(leader.register(), leader.init())
 			self._leaders[instance].set_result(leader)
 	
 	async def serviceRemoved(self, service):
@@ -222,6 +265,12 @@ class SystemMonitor(Monitor):
 	@property
 	def leaders(self):
 		return iter(s.result() for s in self._leaders.values() if s.done())
+
+class SettingsMonitor(Monitor):
+	def __init__(self, bus, **kwargs):
+		super().__init__(bus, handlers = {
+			'com.victronenergy.settings': SettingsClient
+		}, **kwargs)
 
 async def calculation_loop(monitor):
 	while True:
