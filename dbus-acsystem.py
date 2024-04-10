@@ -60,6 +60,12 @@ class Service(_Service):
 			writeable=True, onchange=self._set_customname))
 
 		# Control points
+		self.add_item(DoubleItem("/Ac/In/1/CurrentLimit", None,
+			writeable=True,
+			onchange=lambda v: self._sync_value("/Ac/In/1/CurrentLimit", v)))
+		self.add_item(DoubleItem("/Ac/In/2/CurrentLimit", None,
+			writeable=True,
+			onchange=lambda v: self._sync_value("/Ac/In/2/CurrentLimit", v)))
 		self.add_item(IntegerItem("/Settings/Ess/MinimumSoc", None,
 			writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", None,
@@ -69,11 +75,14 @@ class Service(_Service):
 	
 	def _set_setting(self, setting, _min, _max, v):
 		if _min <= v <= _max:
-			for s in self.subservices:
-				if s.get_value(setting) != v:
-					s.set_value(setting, v)
-			return True
+			return self._sync_value(setting, v)
 		return False
+
+	def _sync_value(self, path, v):
+		for s in self.subservices:
+			if s.get_value(path) != v:
+				s.set_value(path, v)
+		return True
 
 	def _set_minsoc(self, v):
 		return self._set_setting("/Settings/Ess/MinimumSoc", 0, 100, v)
@@ -151,6 +160,7 @@ class RsService(Client):
 		"/Ac/In/1/L1/I", "/Ac/In/2/L1/I", "/Ac/Out/L1/I",
 		"/Ac/In/1/L2/I", "/Ac/In/2/L2/I", "/Ac/Out/L2/I",
 		"/Ac/In/1/L3/I", "/Ac/In/2/L3/I", "/Ac/Out/L3/I",
+		"/Ac/In/1/CurrentLimit", "/Ac/In/2/CurrentLimit",
 		"/N2kSystemInstance",
 		"/Settings/Ess/MinimumSoc",
 		"/Settings/Ess/Mode",
@@ -193,8 +203,13 @@ class RsService(Client):
 	def setpoint(self, v):
 		self.set_value("/Ess/AcPowerSetpoint", v)
 
+	def ac_currentlimit(self, i):
+		return self.get_value(f"/Ac/In/{i}/CurrentLimit")
+
 class SystemMonitor(Monitor):
 	synchronised_paths=(
+		"/Ac/In/1/CurrentLimit",
+		"/Ac/In/2/CurrentLimit",
 		"/Settings/Ess/MinimumSoc",
 		"/Settings/Ess/Mode"
 	)
@@ -231,6 +246,8 @@ class SystemMonitor(Monitor):
 			with leader as s:
 				s["/Settings/Ess/MinimumSoc"] = service.minsoc
 				s["/Settings/Ess/Mode"] = service.mode
+				s["/Ac/In/1/CurrentLimit"] = service.ac_currentlimit(1)
+				s["/Ac/In/2/CurrentLimit"] = service.ac_currentlimit(2)
 
 			# Register on dbus, connect to localsettings
 			await asyncio.gather(leader.register(), leader.init())
