@@ -144,6 +144,7 @@ class RsService(Client):
 	paths = {
 		"/ProductId",
 		"/DeviceInstance",
+		"/Devices/0/Gateway",
 		"/Ac/In/1/L1/P", "/Ac/In/2/L1/P", "/Ac/Out/L1/P",
 		"/Ac/In/1/L2/P", "/Ac/In/2/L2/P", "/Ac/Out/L2/P",
 		"/Ac/In/1/L3/P", "/Ac/In/2/L3/P", "/Ac/Out/L3/P",
@@ -163,6 +164,10 @@ class RsService(Client):
 	@property
 	def systeminstance(self):
 		return self.get_value("/N2kSystemInstance")
+
+	@property
+	def gateway(self):
+		return self.get_value("/Devices/0/Gateway") or ""
 
 	@property
 	def minsoc(self):
@@ -218,8 +223,9 @@ class SystemMonitor(Monitor):
 		else:
 			self._leaders[instance] = asyncio.Future()
 			bus = await self._make_bus().connect()
+			gateway = service.gateway.replace(":", "_")
 			leader = Service(bus,
-				"com.victronenergy.acsystem.I{}".format(instance), service)
+				f"com.victronenergy.acsystem.{gateway}_sys{instance}", service)
 
 			# Initialise service to the first found unit
 			with leader as s:
