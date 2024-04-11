@@ -66,7 +66,7 @@ class Service(_Service):
 		self.add_item(DoubleItem("/Ac/In/2/CurrentLimit", None,
 			writeable=True,
 			onchange=lambda v: self._sync_value("/Ac/In/2/CurrentLimit", v)))
-		self.add_item(IntegerItem("/Settings/Ess/MinimumSoc", None,
+		self.add_item(IntegerItem("/Settings/Ess/MinimumSocLimit", None,
 			writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", None,
 			writeable=True, onchange=self._set_mode))
@@ -85,7 +85,7 @@ class Service(_Service):
 		return True
 
 	def _set_minsoc(self, v):
-		return self._set_setting("/Settings/Ess/MinimumSoc", 0, 100, v)
+		return self._set_setting("/Settings/Ess/MinimumSocLimit", 0, 100, v)
 
 	def _set_mode(self, v):
 		return self._set_setting("/Settings/Ess/Mode", 0, 3, v)
@@ -162,7 +162,7 @@ class RsService(Client):
 		"/Ac/In/1/L3/I", "/Ac/In/2/L3/I", "/Ac/Out/L3/I",
 		"/Ac/In/1/CurrentLimit", "/Ac/In/2/CurrentLimit",
 		"/N2kSystemInstance",
-		"/Settings/Ess/MinimumSoc",
+		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
 		"/Ess/AcPowerSetpoint",
 	}
@@ -181,11 +181,11 @@ class RsService(Client):
 
 	@property
 	def minsoc(self):
-		return self.get_value("/Settings/Ess/MinimumSoc")
+		return self.get_value("/Settings/Ess/MinimumSocLimit")
 
 	@minsoc.setter
 	def minsoc(self, v):
-		self.set_value("/Settings/Ess/MinimumSoc", v)
+		self.set_value("/Settings/Ess/MinimumSocLimit", v)
 
 	@property
 	def mode(self):
@@ -210,7 +210,7 @@ class SystemMonitor(Monitor):
 	synchronised_paths=(
 		"/Ac/In/1/CurrentLimit",
 		"/Ac/In/2/CurrentLimit",
-		"/Settings/Ess/MinimumSoc",
+		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode"
 	)
 
@@ -244,7 +244,7 @@ class SystemMonitor(Monitor):
 
 			# Initialise service to the first found unit
 			with leader as s:
-				s["/Settings/Ess/MinimumSoc"] = service.minsoc
+				s["/Settings/Ess/MinimumSocLimit"] = service.minsoc
 				s["/Settings/Ess/Mode"] = service.mode
 				s["/Ac/In/1/CurrentLimit"] = service.ac_currentlimit(1)
 				s["/Ac/In/2/CurrentLimit"] = service.ac_currentlimit(2)
