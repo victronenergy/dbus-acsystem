@@ -65,17 +65,17 @@ class Service(_Service):
 		# Control points
 		self.add_item(DoubleItem("/Ac/In/1/CurrentLimit", None,
 			writeable=True,
-			onchange=lambda v: self._sync_value("/Ac/In/1/CurrentLimit", v)))
+			onchange=lambda v: self._set_ac_currentlimit(1, v)))
 		self.add_item(DoubleItem("/Ac/In/2/CurrentLimit", None,
 			writeable=True,
-			onchange=lambda v: self._sync_value("/Ac/In/2/CurrentLimit", v)))
+			onchange=lambda v: self._set_ac_currentlimit(2, v)))
 		self.add_item(IntegerItem("/Settings/Ess/MinimumSocLimit", None,
 			writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", None,
 			writeable=True, onchange=self._set_mode))
 		self.add_item(IntegerItem("/Ess/AcPowerSetpoint", None,
 			writeable=True, onchange=self._set_setpoints))
-	
+
 	def _set_setting(self, setting, _min, _max, v):
 		if _min <= v <= _max:
 			return self._sync_value(setting, v)
@@ -86,6 +86,12 @@ class Service(_Service):
 			if s.get_value(path) != v:
 				s.set_value(path, v)
 		return True
+
+	def _set_ac_currentlimit(self, inp, v):
+		if all(s.get_value(f"/Ac/In/{inp}/CurrentLimitIsAdjustable") == 1 \
+				for s in self.subservices):
+			return self._sync_value(f"/Ac/In/{inp}/CurrentLimit", v)
+		return False
 
 	def _set_minsoc(self, v):
 		return self._set_setting("/Settings/Ess/MinimumSocLimit", 0, 100, v)
@@ -117,7 +123,7 @@ class Service(_Service):
 
 	def add_service(self, service):
 		self.subservices.add(service)
-	
+
 	def remove_service(self, service):
 		self.subservices.discard(service)
 
@@ -164,6 +170,7 @@ class RsService(Client):
 		"/Ac/In/1/L2/I", "/Ac/In/2/L2/I", "/Ac/Out/L2/I",
 		"/Ac/In/1/L3/I", "/Ac/In/2/L3/I", "/Ac/Out/L3/I",
 		"/Ac/In/1/CurrentLimit", "/Ac/In/2/CurrentLimit",
+		"/Ac/In/1/CurrentLimitIsAdjustable", "/Ac/In/2/CurrentLimitIsAdjustable",
 		"/N2kSystemInstance",
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
@@ -255,7 +262,7 @@ class SystemMonitor(Monitor):
 			# Register on dbus, connect to localsettings
 			await asyncio.gather(leader.register(), leader.init())
 			self._leaders[instance].set_result(leader)
-	
+
 	async def serviceRemoved(self, service):
 		for leader in list(self.leaders):
 			leader.remove_service(service)
