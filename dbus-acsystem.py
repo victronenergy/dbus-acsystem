@@ -55,6 +55,9 @@ class Service(_Service):
 			self.add_item(IntegerItem(f"/Ac/Out/L{phase}/P", None))
 			self.add_item(IntegerItem(f"/Ac/Out/L{phase}/I", None))
 
+		for inp in range(1, 3):
+				self.add_item(IntegerItem(f"/Ac/In/{inp}/P", None))
+
 		# Custom Name
 		self.add_item(TextItem("/CustomName", None,
 			writeable=True, onchange=self._set_customname))
@@ -303,9 +306,12 @@ async def calculation_loop(monitor):
 			for service in leader.subservices:
 				for phase in range(1, 4):
 					for inp in range(1, 3):
+						a = f"/Ac/In/{inp}/P"
 						b = f"/Ac/In/{inp}/L{phase}/"
 						for p in (b + "P", b + "I"):
 							values[p] = safe_add(values[p], service.get_value(p))
+						p = b + "P"
+						values[a] = safe_add(values[a], service.get_value(p))
 
 					b = f"/Ac/Out/L{phase}/"
 					for p in (b + "P", b + "I"):
