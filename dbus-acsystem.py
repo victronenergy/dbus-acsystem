@@ -83,8 +83,7 @@ class Service(_Service):
 
 	def _sync_value(self, path, v):
 		for s in self.subservices:
-			if s.get_value(path) != v:
-				s.set_value(path, v)
+			s.set_value(path, v)
 		return True
 
 	def _set_ac_currentlimit(self, inp, v):
