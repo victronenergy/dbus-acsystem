@@ -63,15 +63,15 @@ class Service(_Service):
 			writeable=True, onchange=self._set_customname))
 
 		# Control points
-		self.add_item(DoubleItem("/Ac/In/1/CurrentLimit", None,
-			writeable=True,
+		self.add_item(DoubleItem("/Ac/In/1/CurrentLimit",
+			service.ac_currentlimit(1), writeable=True,
 			onchange=lambda v: self._set_ac_currentlimit(1, v)))
-		self.add_item(DoubleItem("/Ac/In/2/CurrentLimit", None,
-			writeable=True,
+		self.add_item(DoubleItem("/Ac/In/2/CurrentLimit",
+			service.ac_currentlimit(2), writeable=True,
 			onchange=lambda v: self._set_ac_currentlimit(2, v)))
-		self.add_item(IntegerItem("/Settings/Ess/MinimumSocLimit", None,
-			writeable=True, onchange=self._set_minsoc))
-		self.add_item(IntegerItem("/Settings/Ess/Mode", None,
+		self.add_item(IntegerItem("/Settings/Ess/MinimumSocLimit",
+			service.minsoc, writeable=True, onchange=self._set_minsoc))
+		self.add_item(IntegerItem("/Settings/Ess/Mode", service.mode,
 			writeable=True, onchange=self._set_mode))
 		self.add_item(IntegerItem("/Ess/AcPowerSetpoint", None,
 			writeable=True, onchange=self._set_setpoints))
@@ -250,13 +250,6 @@ class SystemMonitor(Monitor):
 			gateway = service.gateway.replace(":", "_")
 			leader = Service(bus,
 				f"com.victronenergy.acsystem.{gateway}_sys{instance}", service)
-
-			# Initialise service to the first found unit
-			with leader as s:
-				s["/Settings/Ess/MinimumSocLimit"] = service.minsoc
-				s["/Settings/Ess/Mode"] = service.mode
-				s["/Ac/In/1/CurrentLimit"] = service.ac_currentlimit(1)
-				s["/Ac/In/2/CurrentLimit"] = service.ac_currentlimit(2)
 
 			# Register on dbus, connect to localsettings
 			await asyncio.gather(leader.register(), leader.init())
