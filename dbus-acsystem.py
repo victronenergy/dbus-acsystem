@@ -69,7 +69,7 @@ class Service(_Service):
 		self.add_item(DoubleItem("/Ac/In/2/CurrentLimit",
 			service.ac_currentlimit(2), writeable=True,
 			onchange=lambda v: self._set_ac_currentlimit(2, v)))
-		self.add_item(IntegerItem("/Settings/Ess/MinimumSocLimit",
+		self.add_item(DoubleItem("/Settings/Ess/MinimumSocLimit",
 			service.minsoc, writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", service.mode,
 			writeable=True, onchange=self._set_mode))
