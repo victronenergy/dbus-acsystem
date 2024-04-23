@@ -76,6 +76,11 @@ class Service(_Service):
 		self.add_item(IntegerItem("/Ess/AcPowerSetpoint", None,
 			writeable=True, onchange=self._set_setpoints))
 
+		# Alarms
+		for p in RsService.alarm_settings:
+			self.add_item(IntegerItem(p, service.get_value(p),
+				writeable=True, onchange=lambda v, p=p: self._sync_value(p, v)))
+
 	def _set_setting(self, setting, _min, _max, v):
 		if _min <= v <= _max:
 			return self._sync_value(setting, v)
@@ -158,6 +163,17 @@ class Service(_Service):
 
 class RsService(Client):
 	servicetype = "com.victronenergy.multi"
+	alarm_settings=(
+		"/Settings/AlarmLevel/HighTemperature",
+		"/Settings/AlarmLevel/HighVoltage",
+		"/Settings/AlarmLevel/HighVoltageAcOut",
+		"/Settings/AlarmLevel/LowSoc",
+		"/Settings/AlarmLevel/LowVoltage",
+		"/Settings/AlarmLevel/LowVoltageAcOut",
+		"/Settings/AlarmLevel/Overload",
+		"/Settings/AlarmLevel/Ripple",
+		"/Settings/AlarmLevel/ShortCircuit"
+	)
 	paths = {
 		"/ProductId",
 		"/DeviceInstance",
@@ -174,7 +190,7 @@ class RsService(Client):
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
 		"/Ess/AcPowerSetpoint",
-	}
+	}.union(alarm_settings)
 
 	@property
 	def deviceinstance(self):
@@ -220,8 +236,8 @@ class SystemMonitor(Monitor):
 		"/Ac/In/1/CurrentLimit",
 		"/Ac/In/2/CurrentLimit",
 		"/Settings/Ess/MinimumSocLimit",
-		"/Settings/Ess/Mode"
-	)
+		"/Settings/Ess/Mode",
+	) + RsService.alarm_settings
 
 	def __init__(self, bus, make_bus):
 		super().__init__(bus, handlers = {
