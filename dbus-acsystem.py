@@ -262,7 +262,7 @@ class SystemMonitor(Monitor):
 				leader.__del__()
 				del self._leaders[leader.systeminstance]
 
-	async def change_systeminstance(self, service):
+	async def systemInstanceChanged(self, service):
 		await self.serviceRemoved(service)
 		await self.serviceAdded(service)
 
@@ -270,7 +270,7 @@ class SystemMonitor(Monitor):
 		# If the N2kSystemInstance changes, remove and add the service
 		# again so it ends up in the right system.
 		if '/N2kSystemInstance' in values.keys():
-			asyncio.create_task(self.change_systeminstance(service))
+			asyncio.create_task(self.systemInstanceChanged(service))
 			return
 		try:
 			leader = self._leaders[service.systeminstance].result()
