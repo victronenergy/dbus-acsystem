@@ -82,6 +82,10 @@ class Service(_Service):
 			self.add_item(IntegerItem(p, service.get_value(p),
 				writeable=True, onchange=lambda v, p=p: self._sync_value(p, v)))
 
+		# Capabilities, other summarised paths
+		for p in RsService.summaries:
+			self.add_item(IntegerItem(p, service.get_value(p)))
+
 	def _set_setting(self, setting, _min, _max, v):
 		if _min <= v <= _max:
 			return self._sync_value(setting, v)
@@ -133,6 +137,10 @@ class Service(_Service):
 	def _remove_device_info(self, service):
 		self.get_item(f"/Devices/{service.nad}/Service").set_value(None)
 		self.get_item(f"/Devices/{service.nad}/Instance").set_value(None)
+
+	def update_summary(self, service, path):
+		self.get_item(path).set_value(
+			int(self.get_item(path).value and service.get_value(path)))
 
 	@property
 	def acpowersetpoint(self):
@@ -189,6 +197,9 @@ class RsService(Client):
 		"/Settings/AlarmLevel/Ripple",
 		"/Settings/AlarmLevel/ShortCircuit"
 	)
+	summaries=(
+		"/Capabilities/HasAcPassthroughSupport",
+	)
 	paths = {
 		"/ProductId",
 		"/DeviceInstance",
@@ -206,7 +217,7 @@ class RsService(Client):
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
 		"/Ess/AcPowerSetpoint",
-	}.union(alarm_settings)
+	}.union(alarm_settings).union(summaries)
 
 	@property
 	def deviceinstance(self):
@@ -314,6 +325,10 @@ class SystemMonitor(Monitor):
 			pass
 		else:
 			for p, v in values.items():
+				if p in RsService.summaries:
+					leader.update_summary(service, p)
+					continue
+
 				if p not in self.synchronised_paths: continue
 				for s in leader.subservices:
 					if s is not service:
