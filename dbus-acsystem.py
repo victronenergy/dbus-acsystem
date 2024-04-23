@@ -29,6 +29,12 @@ def safe_add(*args):
 	args = [x for x in args if x is not None]
 	return sum(args) if args else None
 
+def safe_first(*args):
+	for a in args:
+		if a is not None:
+			return a
+	return None
+
 class Service(_Service):
 	def __init__(self, bus, name, service):
 		super().__init__(bus, name)
@@ -52,9 +58,11 @@ class Service(_Service):
 			for inp in range(1, 3):
 				self.add_item(IntegerItem(f"/Ac/In/{inp}/L{phase}/P", None))
 				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/I", None))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/V", None))
 
 			self.add_item(IntegerItem(f"/Ac/Out/L{phase}/P", None))
-			self.add_item(IntegerItem(f"/Ac/Out/L{phase}/I", None))
+			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/I", None))
+			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/V", None))
 
 		for inp in range(1, 3):
 				self.add_item(IntegerItem(f"/Ac/In/{inp}/P", None))
@@ -213,6 +221,9 @@ class RsService(Client):
 		"/Ac/In/1/L1/I", "/Ac/In/2/L1/I", "/Ac/Out/L1/I",
 		"/Ac/In/1/L2/I", "/Ac/In/2/L2/I", "/Ac/Out/L2/I",
 		"/Ac/In/1/L3/I", "/Ac/In/2/L3/I", "/Ac/Out/L3/I",
+		"/Ac/In/1/L1/V", "/Ac/In/2/L1/V", "/Ac/Out/L1/V",
+		"/Ac/In/1/L2/V", "/Ac/In/2/L2/V", "/Ac/Out/L2/V",
+		"/Ac/In/1/L3/V", "/Ac/In/2/L3/V", "/Ac/Out/L3/V",
 		"/Ac/In/1/CurrentLimit", "/Ac/In/2/CurrentLimit",
 		"/N2kSystemInstance",
 		"/Settings/Ess/MinimumSocLimit",
@@ -364,9 +375,15 @@ async def calculation_loop(monitor):
 						p = b + "P"
 						values[a] = safe_add(values[a], service.get_value(p))
 
+						p = b + "V"
+						values[p] = safe_first(values[p], service.get_value(p))
+
 					b = f"/Ac/Out/L{phase}/"
 					for p in (b + "P", b + "I"):
 						values[p] = safe_add(values[p], service.get_value(p))
+
+					p = b + "V"
+					values[p] = safe_first(values[p], service.get_value(p))
 
 			# Number of inputs/phases
 			has_input1 = any(values[f"/Ac/In/1/L{x}/P"] is not None 
