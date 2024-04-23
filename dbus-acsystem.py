@@ -199,6 +199,8 @@ class RsService(Client):
 	)
 	summaries=(
 		"/Capabilities/HasAcPassthroughSupport",
+		"/Ac/In/1/CurrentLimitIsAdjustable",
+		"/Ac/In/2/CurrentLimitIsAdjustable",
 	)
 	paths = {
 		"/ProductId",
@@ -212,7 +214,6 @@ class RsService(Client):
 		"/Ac/In/1/L2/I", "/Ac/In/2/L2/I", "/Ac/Out/L2/I",
 		"/Ac/In/1/L3/I", "/Ac/In/2/L3/I", "/Ac/Out/L3/I",
 		"/Ac/In/1/CurrentLimit", "/Ac/In/2/CurrentLimit",
-		"/Ac/In/1/CurrentLimitIsAdjustable", "/Ac/In/2/CurrentLimitIsAdjustable",
 		"/N2kSystemInstance",
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
