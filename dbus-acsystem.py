@@ -61,10 +61,12 @@ class Service(_Service):
 				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/P", None))
 				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/I", None))
 				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/V", None))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/F", None))
 
 			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/P", None))
 			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/I", None))
 			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/V", None))
+			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/F", None))
 
 		self.add_item(DoubleItem("/Ac/Out/P", None))
 
@@ -228,6 +230,9 @@ class RsService(Client):
 		"/Ac/In/1/L1/V", "/Ac/In/2/L1/V", "/Ac/Out/L1/V",
 		"/Ac/In/1/L2/V", "/Ac/In/2/L2/V", "/Ac/Out/L2/V",
 		"/Ac/In/1/L3/V", "/Ac/In/2/L3/V", "/Ac/Out/L3/V",
+		"/Ac/In/1/L1/F", "/Ac/In/2/L1/F", "/Ac/Out/L1/F",
+		"/Ac/In/1/L2/F", "/Ac/In/2/L2/F", "/Ac/Out/L2/F",
+		"/Ac/In/1/L3/F", "/Ac/In/2/L3/F", "/Ac/Out/L3/F",
 		"/Ac/In/1/CurrentLimit", "/Ac/In/2/CurrentLimit",
 		"/N2kSystemInstance",
 		"/Settings/Ess/MinimumSocLimit",
@@ -379,8 +384,8 @@ async def calculation_loop(monitor):
 						p = b + "P"
 						values[a] = safe_add(values[a], service.get_value(p))
 
-						p = b + "V"
-						values[p] = safe_first(values[p], service.get_value(p))
+						for p in (b + "V", b + "F"):
+							values[p] = safe_first(values[p], service.get_value(p))
 
 					b = f"/Ac/Out/L{phase}/"
 					for p in (b + "P", b + "I"):
@@ -388,8 +393,8 @@ async def calculation_loop(monitor):
 						values["/Ac/Out/P"] = safe_add(values["/Ac/Out/P"],
 							service.get_value(p))
 
-					p = b + "V"
-					values[p] = safe_first(values[p], service.get_value(p))
+					for p in (b + "V", b + "F"):
+						values[p] = safe_first(values[p], service.get_value(p))
 
 			# Number of inputs/phases
 			has_input1 = any(values[f"/Ac/In/1/L{x}/P"] is not None 
