@@ -43,6 +43,7 @@ class Service(_Service):
 		self.add_item(TextItem("/Mgmt/ProcessVersion", VERSION))
 		self.add_item(TextItem("/Mgmt/Connection", "local"))
 		self.add_item(IntegerItem("/Connected", 1))
+		self._add_device_info(service)
 
 		# AC summary
 		self.add_item(IntegerItem("/Ac/NumberOfAcInputs", None))
@@ -121,15 +122,29 @@ class Service(_Service):
 			self.settings.set_value(self.settings.alias("customname"), v)
 		return True
 
+	def _add_device_info(self, service):
+		try:
+			self.add_item(TextItem(f"/Devices/{service.nad}/Service", service.name))
+			self.add_item(IntegerItem(f"/Devices/{service.nad}/Instance", service.deviceinstance))
+		except ValueError:
+			self.get_item(f"/Devices/{service.nad}/Service").set_value(service.name)
+			self.get_item(f"/Devices/{service.nad}/Instance").set_value(service.deviceinstance)
+
+	def _remove_device_info(self, service):
+		self.get_item(f"/Devices/{service.nad}/Service").set_value(None)
+		self.get_item(f"/Devices/{service.nad}/Instance").set_value(None)
+
 	@property
 	def acpowersetpoint(self):
 		return self.get_item("/Ess/AcPowerSetpoint").value
 
 	def add_service(self, service):
 		self.subservices.add(service)
+		self._add_device_info(service)
 
 	def remove_service(self, service):
 		self.subservices.discard(service)
+		self._remove_device_info(service)
 
 	async def wait_for_settings(self):
 		""" Attempt a connection to localsettings. """
@@ -178,6 +193,7 @@ class RsService(Client):
 		"/ProductId",
 		"/DeviceInstance",
 		"/Devices/0/Gateway",
+		"/Devices/0/Nad",
 		"/Ac/In/1/L1/P", "/Ac/In/2/L1/P", "/Ac/Out/L1/P",
 		"/Ac/In/1/L2/P", "/Ac/In/2/L2/P", "/Ac/Out/L2/P",
 		"/Ac/In/1/L3/P", "/Ac/In/2/L3/P", "/Ac/Out/L3/P",
@@ -203,6 +219,10 @@ class RsService(Client):
 	@property
 	def gateway(self):
 		return self.get_value("/Devices/0/Gateway") or ""
+
+	@property
+	def nad(self):
+		return self.get_value("/Devices/0/Nad")
 
 	@property
 	def minsoc(self):
