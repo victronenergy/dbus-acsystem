@@ -64,6 +64,8 @@ class Service(_Service):
 			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/I", None))
 			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/V", None))
 
+		self.add_item(DoubleItem("/Ac/Out/P", None))
+
 		for inp in range(1, 3):
 				self.add_item(IntegerItem(f"/Ac/In/{inp}/P", None))
 
@@ -381,6 +383,8 @@ async def calculation_loop(monitor):
 					b = f"/Ac/Out/L{phase}/"
 					for p in (b + "P", b + "I"):
 						values[p] = safe_add(values[p], service.get_value(p))
+						values["/Ac/Out/P"] = safe_add(values["/Ac/Out/P"],
+							service.get_value(p))
 
 					p = b + "V"
 					values[p] = safe_first(values[p], service.get_value(p))
