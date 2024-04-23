@@ -133,7 +133,7 @@ class Service(_Service):
 		self.settings = await asyncio.wait_for(
 			settingsmonitor.wait_for_service(SETTINGS_SERVICE), 5)
 		await self.settings.add_settings(
-			Setting("/Settings/AcSystem/{}/Customname".format(
+			Setting("/Settings/AcSystem/{}/CustomName".format(
 				self.systeminstance), "", alias="customname"),
 		)
 
@@ -150,7 +150,7 @@ class Service(_Service):
 
 	@property
 	def customname(self):
-		return self.get_item("/Customname").value
+		return self.get_item("/CustomName").value
 
 	@customname.setter
 	def customname(self, v):
