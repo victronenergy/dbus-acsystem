@@ -56,18 +56,18 @@ class Service(_Service):
 		self.add_item(IntegerItem("/Ac/NumberOfPhases", None))
 		for phase in range(1, 4):
 			for inp in range(1, 3):
-				self.add_item(IntegerItem(f"/Ac/In/{inp}/L{phase}/P", None))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/P", None))
 				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/I", None))
 				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/V", None))
 
-			self.add_item(IntegerItem(f"/Ac/Out/L{phase}/P", None))
+			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/P", None))
 			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/I", None))
 			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/V", None))
 
 		self.add_item(DoubleItem("/Ac/Out/P", None))
 
 		for inp in range(1, 3):
-				self.add_item(IntegerItem(f"/Ac/In/{inp}/P", None))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/P", None))
 
 		# Custom Name
 		self.add_item(TextItem("/CustomName", None,
