@@ -51,6 +51,8 @@ class Service(_Service):
 		self.add_item(TextItem("/Mgmt/ProcessVersion", VERSION))
 		self.add_item(TextItem("/Mgmt/Connection", "local"))
 		self.add_item(IntegerItem("/Connected", 1))
+
+		self.add_item(IntegerItem("/State", None))
 		self._add_device_info(service)
 
 		# AC summary
@@ -234,7 +236,7 @@ class RsService(Client):
 		"/Ac/In/1/L2/F", "/Ac/In/2/L2/F", "/Ac/Out/L2/F",
 		"/Ac/In/1/L3/F", "/Ac/In/2/L3/F", "/Ac/Out/L3/F",
 		"/Ac/In/1/CurrentLimit", "/Ac/In/2/CurrentLimit",
-		"/N2kSystemInstance",
+		"/N2kSystemInstance", "/State",
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
 		"/Ess/AcPowerSetpoint",
@@ -255,6 +257,10 @@ class RsService(Client):
 	@property
 	def nad(self):
 		return self.get_value("/Devices/0/Nad")
+
+	@property
+	def state(self):
+		return self.get_value("/State")
 
 	@property
 	def minsoc(self):
@@ -405,6 +411,14 @@ async def calculation_loop(monitor):
 
 			# Number of phases, we will use the outputs to detect that
 			values["/Ac/NumberOfPhases"] = sum(int(values[f"/Ac/Out/L{x}/P"] is not None) for x in range(1, 4))
+
+			# Determine overall state
+			if len(set(s.state for s in leader.subservices)) == 1:
+				for s in leader.subservices:
+					values["/State"] = s.state
+					break
+			else:
+				values["/State"] = None
 
 			with leader as s:
 				for p, v in values.items():
