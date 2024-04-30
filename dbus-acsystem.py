@@ -144,19 +144,23 @@ class Service(_Service):
 
 	def _add_device_info(self, service):
 		try:
-			self.add_item(TextItem(f"/Devices/{service.nad}/Service", service.name))
-			self.add_item(IntegerItem(f"/Devices/{service.nad}/Instance", service.deviceinstance))
+			self.add_item(TextItem(f"/Devices/{service.nad}/Service", None))
+			self.add_item(IntegerItem(f"/Devices/{service.nad}/Instance", None))
 		except ValueError:
-			self.get_item(f"/Devices/{service.nad}/Service").set_value(service.name)
-			self.get_item(f"/Devices/{service.nad}/Instance").set_value(service.deviceinstance)
+			pass # Path already exists
+		else:
+			with self as s:
+				s[f"/Devices/{service.nad}/Service"] = service.name
+				s[f"/Devices/{service.nad}/Instance"] = service.deviceinstance
 
 	def _remove_device_info(self, service):
-		self.get_item(f"/Devices/{service.nad}/Service").set_value(None)
-		self.get_item(f"/Devices/{service.nad}/Instance").set_value(None)
+		with self as s:
+			s[f"/Devices/{service.nad}/Service"] = None
+			s[f"/Devices/{service.nad}/Instance"] = None
 
 	def update_summary(self, service, path):
-		self.get_item(path).set_value(
-			int(self.get_item(path).value and service.get_value(path)))
+		with self as s:
+			s[path] = int(self.get_item(path).value and service.get_value(path))
 
 	@property
 	def acpowersetpoint(self):
