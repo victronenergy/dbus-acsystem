@@ -198,7 +198,8 @@ class Service(_Service):
 
 	@customname.setter
 	def customname(self, v):
-		self.get_item("/CustomName").set_value(v)
+		with self as s:
+			s["/CustomName"] = v or f"RS system ({self.systeminstance})"
 
 class RsService(Client):
 	servicetype = "com.victronenergy.multi"
