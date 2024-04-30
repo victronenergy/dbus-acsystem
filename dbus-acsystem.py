@@ -154,9 +154,8 @@ class Service(_Service):
 				s[f"/Devices/{service.nad}/Instance"] = service.deviceinstance
 
 	def _remove_device_info(self, service):
-		with self as s:
-			s[f"/Devices/{service.nad}/Service"] = None
-			s[f"/Devices/{service.nad}/Instance"] = None
+		self.remove_item(f"/Devices/{service.nad}/Service")
+		self.remove_item(f"/Devices/{service.nad}/Instance")
 
 	def update_summary(self, service, path):
 		with self as s:
