@@ -80,6 +80,8 @@ class Service(_Service):
 			writeable=True, onchange=self._set_customname))
 
 		# Control points
+		self.add_item(IntegerItem("/Mode", service.mode,
+			writeable=True, onchange=self._set_mode))
 		self.add_item(DoubleItem("/Ac/In/1/CurrentLimit",
 			service.ac_currentlimit(1), writeable=True,
 			onchange=lambda v: self._set_ac_currentlimit(1, v)))
@@ -88,8 +90,8 @@ class Service(_Service):
 			onchange=lambda v: self._set_ac_currentlimit(2, v)))
 		self.add_item(DoubleItem("/Settings/Ess/MinimumSocLimit",
 			service.minsoc, writeable=True, onchange=self._set_minsoc))
-		self.add_item(IntegerItem("/Settings/Ess/Mode", service.mode,
-			writeable=True, onchange=self._set_mode))
+		self.add_item(IntegerItem("/Settings/Ess/Mode", service.essmode,
+			writeable=True, onchange=self._set_ess_mode))
 		self.add_item(IntegerItem("/Ess/AcPowerSetpoint", None,
 			writeable=True, onchange=self._set_setpoints))
 
@@ -112,6 +114,13 @@ class Service(_Service):
 			s.set_value(path, v)
 		return True
 
+	def _set_mode(self, v):
+		if v in (1, 2, 3, 4, 251):
+			for s in self.subservices:
+				s.mode = v
+				return True
+		return False
+
 	def _set_ac_currentlimit(self, inp, v):
 		if all(s.get_value(f"/Ac/In/{inp}/CurrentLimitIsAdjustable") == 1 \
 				for s in self.subservices):
@@ -121,7 +130,7 @@ class Service(_Service):
 	def _set_minsoc(self, v):
 		return self._set_setting("/Settings/Ess/MinimumSocLimit", 0, 100, v)
 
-	def _set_mode(self, v):
+	def _set_ess_mode(self, v):
 		return self._set_setting("/Settings/Ess/Mode", 0, 3, v)
 
 	def _set_setpoints(self, v):
@@ -240,7 +249,7 @@ class RsService(Client):
 		"/Ac/In/1/L2/F", "/Ac/In/2/L2/F", "/Ac/Out/L2/F",
 		"/Ac/In/1/L3/F", "/Ac/In/2/L3/F", "/Ac/Out/L3/F",
 		"/Ac/In/1/CurrentLimit", "/Ac/In/2/CurrentLimit",
-		"/N2kSystemInstance", "/State",
+		"/N2kSystemInstance", "/State", "/Mode",
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
 		"/Ess/AcPowerSetpoint",
@@ -267,6 +276,14 @@ class RsService(Client):
 		return self.get_value("/State")
 
 	@property
+	def mode(self):
+		return self.get_value("/Mode")
+
+	@mode.setter
+	def mode(self, v):
+		self.set_value("/Mode", v)
+
+	@property
 	def minsoc(self):
 		return self.get_value("/Settings/Ess/MinimumSocLimit")
 
@@ -275,11 +292,11 @@ class RsService(Client):
 		self.set_value("/Settings/Ess/MinimumSocLimit", v)
 
 	@property
-	def mode(self):
+	def essmode(self):
 		return self.get_value("/Settings/Ess/Mode")
 
-	@mode.setter
-	def mode(self, v):
+	@essmode.setter
+	def essmode(self, v):
 		self.set_value("/Settings/Ess/Mode", v)
 
 	@property
