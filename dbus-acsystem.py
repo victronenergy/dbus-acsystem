@@ -168,7 +168,7 @@ class Service(_Service):
 
 	def update_summary(self, service, path):
 		with self as s:
-			s[path] = int(self.get_item(path).value and service.get_value(path))
+			s[path] = int(all(x.get_value(path) for x in self.subservices))
 
 	@property
 	def acpowersetpoint(self):
