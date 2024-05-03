@@ -35,6 +35,13 @@ def safe_first(*args):
 			return a
 	return None
 
+# Formatters
+
+format_w = lambda v: f"{v:.0f} W"
+format_a = lambda v: f"{v:.1f} A"
+format_v = lambda v: f"{v:.2f} V"
+format_f = lambda v: f"{v:.1f} Hz"
+
 class Service(_Service):
 	def __init__(self, bus, name, service):
 		super().__init__(bus, name)
@@ -60,20 +67,20 @@ class Service(_Service):
 		self.add_item(IntegerItem("/Ac/NumberOfPhases", None))
 		for phase in range(1, 4):
 			for inp in range(1, 3):
-				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/P", None))
-				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/I", None))
-				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/V", None))
-				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/F", None))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/P", None, text=format_w))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/I", None, text=format_a))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/V", None, text=format_v))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/L{phase}/F", None, text=format_f))
 
-			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/P", None))
-			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/I", None))
-			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/V", None))
-			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/F", None))
+			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/P", None, text=format_w))
+			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/I", None, text=format_a))
+			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/V", None, text=format_v))
+			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/F", None, text=format_f))
 
-		self.add_item(DoubleItem("/Ac/Out/P", None))
+		self.add_item(DoubleItem("/Ac/Out/P", None, text=format_w))
 
 		for inp in range(1, 3):
-				self.add_item(DoubleItem(f"/Ac/In/{inp}/P", None))
+				self.add_item(DoubleItem(f"/Ac/In/{inp}/P", None, text=format_w))
 
 		# Custom Name
 		self.add_item(TextItem("/CustomName", None,
