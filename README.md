@@ -11,7 +11,9 @@ a Custom Name.
 
 ## dBus paths
 ### Settings
-This (mostly) mirrors the paths from the Multi-RS service
+This (mostly) mirrors the paths from the Multi-RS service. In all cases
+(except where noted), the setting is simply mirrored to all the units
+in the system.
 
 Notes:
 * In the current version, the AC power setpoint
@@ -27,9 +29,11 @@ Notes:
   all start/stop discharging at the same SOC.
 
 ```
+/Mode                         <--- Switch position, sent to one RS, RS already syncs this
 /Ess/AcPowerSetpoint          <--- AC power setpoint
 /Settings/Ess/MinimumSocLimit <--- Minimum SOC limit for ESS
 /Settings/Ess/Mode            <--- ESS mode
+/Settings/AlarmLevel/...      <--- Disable, warn, or only alarm.
 ```
 
 ## Data
@@ -37,6 +41,7 @@ The following summary data is calculated from the information provided
 by the individual units.
 
 ```
+/State                <--- Summarised state of the system
 /Ac/In/n/CurrentLimit <--- AC input current limit for input n
 /Ac/In/n/Lx/I         <--- Total current drawn on phase x, input n
 /Ac/In/n/Lx/P         <--- Total power drawn on phase x, input n
@@ -45,4 +50,7 @@ by the individual units.
 /Ac/NumberOfPhases    <--- Number of phases
 /Ac/Out/Lx/I          <--- Total current drawn on output
 /Ac/Out/Lx/P          <--- Total power drawn on output
+
+/Devices/x/Service     <--- List of service/instances that make up this service
+/Devices/x/Instance
 ```
