@@ -99,6 +99,8 @@ class Service(_Service):
 			service.minsoc, writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", service.essmode,
 			writeable=True, onchange=self._set_ess_mode))
+		self.add_item(IntegerItem("/Ess/DisableFeedIn", service.disable_feedin,
+			writeable=True, onchange=lambda v: self._set_setting("/Ess/DisableFeedIn", 0, 1, v)))
 		self.add_item(IntegerItem("/Ess/AcPowerSetpoint", None,
 			writeable=True, onchange=self._set_setpoints))
 
@@ -260,6 +262,7 @@ class RsService(Client):
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
 		"/Ess/AcPowerSetpoint",
+		"/Ess/DisableFeedIn"
 	}.union(alarm_settings).union(summaries)
 
 	@property
@@ -307,6 +310,10 @@ class RsService(Client):
 		self.set_value("/Settings/Ess/Mode", v)
 
 	@property
+	def disable_feedin(self):
+		return self.get_value("/Ess/DisableFeedIn")
+
+	@property
 	def setpoint(self):
 		return self.get_value("/Ess/AcPowerSetpoint")
 
@@ -323,6 +330,7 @@ class SystemMonitor(Monitor):
 		"/Ac/In/2/CurrentLimit",
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
+		"/Ess/DisableFeedIn",
 	) + RsService.alarm_settings
 
 	def __init__(self, bus, make_bus):
