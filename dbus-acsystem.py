@@ -120,7 +120,7 @@ class Service(_Service):
 
 	def _sync_value(self, path, v):
 		for s in self.subservices:
-			s.set_value(path, v)
+			s.set_value_async(path, v)
 		return True
 
 	def _set_mode(self, v):
@@ -157,7 +157,7 @@ class Service(_Service):
 	def _set_customname(self, v):
 		cn = self.settings.get_value(self.settings.alias("customname"))
 		if cn != v:
-			self.settings.set_value(self.settings.alias("customname"), v)
+			self.settings.set_value_async(self.settings.alias("customname"), v)
 		return True
 
 	def _add_device_info(self, service):
@@ -291,7 +291,7 @@ class RsService(Client):
 
 	@mode.setter
 	def mode(self, v):
-		self.set_value("/Mode", v)
+		self.set_value_async("/Mode", v)
 
 	@property
 	def minsoc(self):
@@ -299,7 +299,7 @@ class RsService(Client):
 
 	@minsoc.setter
 	def minsoc(self, v):
-		self.set_value("/Settings/Ess/MinimumSocLimit", v)
+		self.set_value_async("/Settings/Ess/MinimumSocLimit", v)
 
 	@property
 	def essmode(self):
@@ -307,7 +307,7 @@ class RsService(Client):
 
 	@essmode.setter
 	def essmode(self, v):
-		self.set_value("/Settings/Ess/Mode", v)
+		self.set_value_async("/Settings/Ess/Mode", v)
 
 	@property
 	def disable_feedin(self):
@@ -319,7 +319,7 @@ class RsService(Client):
 
 	@setpoint.setter
 	def setpoint(self, v):
-		self.set_value("/Ess/AcPowerSetpoint", v)
+		self.set_value_async("/Ess/AcPowerSetpoint", v)
 
 	def ac_currentlimit(self, i):
 		return self.get_value(f"/Ac/In/{i}/CurrentLimit")
@@ -353,7 +353,7 @@ class SystemMonitor(Monitor):
 			for p in self.synchronised_paths:
 				v = leader.get_item(p).value
 				if v != service.get_value(p):
-					service.set_value(p, v)
+					service.set_value_async(p, v)
 		else:
 			self._leaders[instance] = asyncio.Future()
 			bus = await self._make_bus().connect()
@@ -396,7 +396,7 @@ class SystemMonitor(Monitor):
 				for s in leader.subservices:
 					if s is not service:
 						if s.get_value(p) != v:
-							s.set_value(p, v)
+							s.set_value_async(p, v)
 				if leader.get_item(p).value != v:
 					with leader as s:
 						s[p] = v
