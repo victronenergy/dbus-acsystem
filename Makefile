@@ -17,7 +17,7 @@ help:
 clean: ;
 
 install: $(LIBS) $(FILES)
-	install -d 755 $(DESTDIR)$(bindir)
+	install -m 755 -d $(DESTDIR)$(bindir)
 	cp --parents $^ $(DESTDIR)$(bindir)
 	chmod +x $(DESTDIR)$(bindir)/$(firstword $(FILES))
 
