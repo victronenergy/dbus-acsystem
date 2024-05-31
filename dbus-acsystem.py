@@ -224,6 +224,13 @@ class Service(_Service):
 
 class RsService(Client):
 	servicetype = "com.victronenergy.multi"
+	synchronised_paths=(
+		"/Ac/In/1/CurrentLimit",
+		"/Ac/In/2/CurrentLimit",
+		"/Settings/Ess/MinimumSocLimit",
+		"/Settings/Ess/Mode",
+		"/Ess/DisableFeedIn",
+	)
 	alarm_settings=(
 		"/Settings/AlarmLevel/HighTemperature",
 		"/Settings/AlarmLevel/HighVoltage",
@@ -257,13 +264,9 @@ class RsService(Client):
 		"/Ac/In/1/L1/F", "/Ac/In/2/L1/F", "/Ac/Out/L1/F",
 		"/Ac/In/1/L2/F", "/Ac/In/2/L2/F", "/Ac/Out/L2/F",
 		"/Ac/In/1/L3/F", "/Ac/In/2/L3/F", "/Ac/Out/L3/F",
-		"/Ac/In/1/CurrentLimit", "/Ac/In/2/CurrentLimit",
 		"/N2kSystemInstance", "/State", "/Mode",
-		"/Settings/Ess/MinimumSocLimit",
-		"/Settings/Ess/Mode",
-		"/Ess/AcPowerSetpoint",
-		"/Ess/DisableFeedIn"
-	}.union(alarm_settings).union(summaries)
+		"/Ess/AcPowerSetpoint"
+	}.union(synchronised_paths).union(alarm_settings).union(summaries)
 
 	@property
 	def deviceinstance(self):
@@ -321,17 +324,19 @@ class RsService(Client):
 	def setpoint(self, v):
 		self.set_value_async("/Ess/AcPowerSetpoint", v)
 
+	@property
+	def inverter_setpoint(self):
+		return self.get_value("/Ess/InverterPowerSetpoint")
+
+	@inverter_setpoint.setter
+	def inverter_setpoint(self, v):
+		self.set_value_async("/Ess/InverterPowerSetpoint", v)
+
 	def ac_currentlimit(self, i):
 		return self.get_value(f"/Ac/In/{i}/CurrentLimit")
 
 class SystemMonitor(Monitor):
-	synchronised_paths=(
-		"/Ac/In/1/CurrentLimit",
-		"/Ac/In/2/CurrentLimit",
-		"/Settings/Ess/MinimumSocLimit",
-		"/Settings/Ess/Mode",
-		"/Ess/DisableFeedIn",
-	) + RsService.alarm_settings
+	synchronised_paths = RsService.synchronised_paths + RsService.alarm_settings
 
 	def __init__(self, bus, make_bus):
 		super().__init__(bus, handlers = {
