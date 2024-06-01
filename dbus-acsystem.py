@@ -356,9 +356,13 @@ class SystemMonitor(Monitor):
 
 			# Synchronise with the other units
 			for p in self.synchronised_paths:
-				v = leader.get_item(p).value
-				if v != service.get_value(p):
-					service.set_value_async(p, v)
+				try:
+					v = leader.get_item(p).value
+				except AttributeError:
+					pass
+				else:
+					if v is not None and v != service.get_value(p):
+						service.set_value_async(p, v)
 		else:
 			self._leaders[instance] = asyncio.Future()
 			bus = await self._make_bus().connect()
