@@ -19,6 +19,7 @@ from aiovelib.service import Service as _Service
 from aiovelib.service import IntegerItem, TextItem, DoubleItem
 from aiovelib.client import Service as Client
 from aiovelib.client import Monitor
+from aiovelib.client import Item as ClientItem
 from aiovelib.localsettings import SettingsService as SettingsClient
 from aiovelib.localsettings import Setting, SETTINGS_SERVICE
 
@@ -175,7 +176,7 @@ class Service(_Service):
 		self.remove_item(f"/Devices/{service.nad}/Service")
 		self.remove_item(f"/Devices/{service.nad}/Instance")
 
-	def update_summary(self, service, path):
+	def update_summary(self, path):
 		with self as s:
 			s[path] = int(all(x.get_value(path) for x in self.subservices))
 
@@ -222,7 +223,22 @@ class Service(_Service):
 		with self as s:
 			s["/CustomName"] = v or f"RS system ({self.systeminstance})"
 
+class RsItem(ClientItem):
+	""" Subclass to allow us to wait for an item to turn valid. """
+	def __init__(self):
+		super().__init__()
+		self._valid = asyncio.Future()
+
+	def update(self, value):
+		super().update(value)
+		if self.value is not None and not self._valid.done():
+			self._valid.set_result(None)
+
+	async def wait_for_valid(self):
+		return await self._valid
+
 class RsService(Client):
+	make_item = RsItem
 	servicetype = "com.victronenergy.multi"
 	synchronised_paths=(
 		"/Ac/In/1/CurrentLimit",
@@ -267,6 +283,11 @@ class RsService(Client):
 		"/N2kSystemInstance", "/State", "/Mode",
 		"/Ess/AcPowerSetpoint"
 	}.union(synchronised_paths).union(alarm_settings).union(summaries)
+
+	async def wait_for_valid(self, *paths):
+		# This will create the items (but mark them unseen) when you access
+		# the dictionary entry
+		await asyncio.gather(*(self.values[p].wait_for_valid() for p in paths))
 
 	@property
 	def deviceinstance(self):
@@ -346,13 +367,21 @@ class SystemMonitor(Monitor):
 		self._make_bus = make_bus
 
 	async def serviceAdded(self, service):
+		# We need these paths valid before we can do anything
+		await service.wait_for_valid(
+			"/Mode",
+			"/Ac/In/1/CurrentLimit",
+			"/Settings/Ess/MinimumSocLimit",
+			"/Settings/Ess/Mode",
+			"/Ess/DisableFeedIn",
+		)
+
 		instance = service.systeminstance
 		if instance is None:
 			return # Firmware is old, or it is still starting up
 
 		if instance in self._leaders:
 			leader = await self._leaders[instance]
-			leader.add_service(service)
 
 			# Synchronise with the other units
 			for p in self.synchronised_paths:
@@ -363,6 +392,8 @@ class SystemMonitor(Monitor):
 				else:
 					if v is not None and v != service.get_value(p):
 						service.set_value_async(p, v)
+
+			leader.add_service(service)
 		else:
 			self._leaders[instance] = asyncio.Future()
 			bus = await self._make_bus().connect()
@@ -396,9 +427,13 @@ class SystemMonitor(Monitor):
 		except (KeyError, asyncio.InvalidStateError):
 			pass
 		else:
+			# Don't accept updates from services that are not part of the
+			# system yet.
+			if service not in leader.subservices:
+				return
 			for p, v in values.items():
 				if p in RsService.summaries:
-					leader.update_summary(service, p)
+					leader.update_summary(p)
 					continue
 
 				if p not in self.synchronised_paths: continue
