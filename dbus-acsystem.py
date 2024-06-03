@@ -105,6 +105,13 @@ class Service(_Service):
 		self.add_item(IntegerItem("/Ess/AcPowerSetpoint", None,
 			writeable=True, onchange=self._set_setpoints))
 
+		# Inverter DC power control
+		self.add_item(IntegerItem("/Ess/UseInverterPowerSetpoint",
+			service.get_value("/Ess/UseInverterPowerSetpoint"), writeable=True,
+			onchange=lambda v: self._sync_value("/Ess/UseInverterPowerSetpoint", v)))
+		self.add_item(IntegerItem("/Ess/InverterPowerSetpoint", None,
+			writeable=True, onchange=self._set_inverter_setpoints))
+
 		# Alarms
 		for p in RsService.alarm_settings:
 			self.add_item(IntegerItem(p, service.get_value(p),
@@ -153,6 +160,17 @@ class Service(_Service):
 		else:
 			for service in self.subservices:
 				service.setpoint = setpoint
+		return True
+
+	def _set_inverter_setpoints(self, v):
+		unitcount = len(self.subservices)
+		try:
+			setpoint = v / unitcount
+		except (TypeError, ZeroDivisionError):
+			pass
+		else:
+			for service in self.subservices:
+				service.inverter_setpoint = setpoint
 		return True
 
 	def _set_customname(self, v):
@@ -246,6 +264,7 @@ class RsService(Client):
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode",
 		"/Ess/DisableFeedIn",
+		"/Ess/UseInverterPowerSetpoint"
 	)
 	alarm_settings=(
 		"/Settings/AlarmLevel/HighTemperature",
