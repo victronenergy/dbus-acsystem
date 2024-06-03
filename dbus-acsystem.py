@@ -300,7 +300,7 @@ class RsService(Client):
 		"/Ac/In/1/L2/F", "/Ac/In/2/L2/F", "/Ac/Out/L2/F",
 		"/Ac/In/1/L3/F", "/Ac/In/2/L3/F", "/Ac/Out/L3/F",
 		"/N2kSystemInstance", "/State", "/Mode",
-		"/Ess/AcPowerSetpoint"
+		"/Ess/AcPowerSetpoint", "/Ess/InverterPowerSetpoint"
 	}.union(synchronised_paths).union(alarm_settings).union(summaries)
 
 	async def wait_for_valid(self, *paths):
