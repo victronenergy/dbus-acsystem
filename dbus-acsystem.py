@@ -23,6 +23,8 @@ from aiovelib.client import Item as ClientItem
 from aiovelib.localsettings import SettingsService as SettingsClient
 from aiovelib.localsettings import Setting, SETTINGS_SERVICE
 
+CONTROL_TIMEOUT = 60
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -49,6 +51,8 @@ class Service(_Service):
 		self.systeminstance = service.systeminstance
 		self.subservices = { service }
 		self.settings = None
+
+		self._control_timeout = -1
 
 		# Compulsory paths
 		self.add_item(IntegerItem("/ProductId", None))
@@ -101,13 +105,13 @@ class Service(_Service):
 		self.add_item(IntegerItem("/Settings/Ess/Mode", service.essmode,
 			writeable=True, onchange=self._set_ess_mode))
 		self.add_item(IntegerItem("/Ess/DisableFeedIn", service.disable_feedin,
-			writeable=True, onchange=lambda v: self._set_setting("/Ess/DisableFeedIn", 0, 1, v)))
+			writeable=True, onchange=self._set_disable_feedin))
 		self.add_item(IntegerItem("/Ess/AcPowerSetpoint", None,
 			writeable=True, onchange=self._set_setpoints))
 
 		# Inverter DC power control
 		self.add_item(IntegerItem("/Ess/UseInverterPowerSetpoint",
-			service.get_value("/Ess/UseInverterPowerSetpoint"), writeable=True,
+			service.use_inverter_setpoint, writeable=True,
 			onchange=lambda v: self._sync_value("/Ess/UseInverterPowerSetpoint", v)))
 		self.add_item(IntegerItem("/Ess/InverterPowerSetpoint", None,
 			writeable=True, onchange=self._set_inverter_setpoints))
@@ -150,7 +154,12 @@ class Service(_Service):
 	def _set_ess_mode(self, v):
 		return self._set_setting("/Settings/Ess/Mode", 0, 3, v)
 
+	def _set_disable_feedin(self, v):
+		self.timeout_reset()
+		return self._set_setting("/Ess/DisableFeedIn", 0, 1, v)
+
 	def _set_setpoints(self, v):
+		self.timeout_reset()
 		phasecount = self.get_item("/Ac/NumberOfPhases").value
 		# Per phase
 		try:
@@ -163,6 +172,7 @@ class Service(_Service):
 		return True
 
 	def _set_inverter_setpoints(self, v):
+		self.timeout_reset()
 		unitcount = len(self.subservices)
 		try:
 			setpoint = v / unitcount
@@ -197,6 +207,21 @@ class Service(_Service):
 	def update_summary(self, path):
 		with self as s:
 			s[path] = int(all(x.get_value(path) for x in self.subservices))
+
+	def timeout_reset(self):
+		self._control_timeout = CONTROL_TIMEOUT
+
+	def timeout_tick(self):
+		self._control_timeout = max(-1, self._control_timeout - 1)
+		if self._control_timeout == 0:
+			for service in self.subservices:
+				service.setpoint = 0
+				service.inverter_setpoint = 0
+				service.disable_feedin = 0
+				service.use_inverter_setpoint = 0
+			with self as s:
+				s["/Ess/AcPowerSetpoint"] = 0
+				s["/Ess/InverterPowerSetpoint"] = 0
 
 	@property
 	def acpowersetpoint(self):
@@ -356,6 +381,18 @@ class RsService(Client):
 	def disable_feedin(self):
 		return self.get_value("/Ess/DisableFeedIn")
 
+	@disable_feedin.setter
+	def disable_feedin(self, v):
+		self.set_value_async("/Ess/DisableFeedIn", v)
+
+	@property
+	def use_inverter_setpoint(self):
+		return self.get_value("/Ess/UseInverterPowerSetpoint")
+
+	@use_inverter_setpoint.setter
+	def use_inverter_setpoint(self, v):
+		self.set_value_async("/Ess/UseInverterPowerSetpoint", v)
+
 	@property
 	def setpoint(self):
 		return self.get_value("/Ess/AcPowerSetpoint")
@@ -477,6 +514,9 @@ class SettingsMonitor(Monitor):
 async def calculation_loop(monitor):
 	while True:
 		for leader in monitor.leaders:
+			# Reset anything that times out
+			leader.timeout_tick()
+
 			# Sum power and current values over all units in the system
 			values = defaultdict(lambda: None)
 			for service in leader.subservices:
