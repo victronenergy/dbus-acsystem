@@ -123,6 +123,8 @@ class Service(_Service):
 				writeable=True, onchange=lambda v, p=p: self._sync_value(p, v)))
 
 		# Capabilities, other summarised paths
+		self.add_item(IntegerItem("/Capabilities/HasDynamicEssSupport", 0))
+		self.update_capabilities()
 		for p in RsService.summaries:
 			self.add_item(IntegerItem(p, service.get_value(p)))
 
@@ -201,6 +203,11 @@ class Service(_Service):
 				s[f"/Devices/{service.nad}/Service"] = service.name
 				s[f"/Devices/{service.nad}/Instance"] = service.deviceinstance
 
+	def update_capabilities(self):
+		with self as s:
+			s["/Capabilities/HasDynamicEssSupport"] = int(all(
+				x.firmwareversion >= 0x11711 for x in self.subservices))
+
 	def _remove_device_info(self, service):
 		self.remove_item(f"/Devices/{service.nad}/Service")
 		self.remove_item(f"/Devices/{service.nad}/Instance")
@@ -230,6 +237,7 @@ class Service(_Service):
 
 	def add_service(self, service):
 		self.subservices.add(service)
+		self.update_capabilities()
 		self._add_device_info(service)
 
 	def remove_service(self, service):
@@ -310,6 +318,7 @@ class RsService(Client):
 	)
 	paths = {
 		"/ProductId",
+		"/FirmwareVersion",
 		"/DeviceInstance",
 		"/Devices/0/Gateway",
 		"/Devices/0/Nad",
@@ -338,6 +347,10 @@ class RsService(Client):
 	@property
 	def deviceinstance(self):
 		return self.get_value("/DeviceInstance")
+
+	@property
+	def firmwareversion(self):
+		return self.get_value("/FirmwareVersion")
 
 	@property
 	def systeminstance(self):
