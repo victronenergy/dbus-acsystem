@@ -436,6 +436,8 @@ class SystemMonitor(Monitor):
 	async def serviceAdded(self, service):
 		# We need these paths valid before we can do anything
 		await service.wait_for_valid(
+			"/N2kSystemInstance",
+			"/FirmwareVersion",
 			"/Mode",
 			"/Ac/In/1/CurrentLimit",
 			"/Settings/Ess/MinimumSocLimit",
