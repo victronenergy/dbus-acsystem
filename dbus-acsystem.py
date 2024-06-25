@@ -45,6 +45,17 @@ format_a = lambda v: f"{v:.1f} A"
 format_v = lambda v: f"{v:.2f} V"
 format_f = lambda v: f"{v:.1f} Hz"
 
+class ForcedIntegerItem(IntegerItem):
+	def __init__(self, onwrite, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.onwrite = onwrite
+
+	def set_value(self, v):
+		# Override so we can react on writes even if they don't change
+		# the internal value
+		self.onwrite()
+		return super().set_value(v)
+
 class Service(_Service):
 	def __init__(self, bus, name, service):
 		super().__init__(bus, name)
@@ -105,16 +116,19 @@ class Service(_Service):
 			service.minsoc, writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", service.essmode,
 			writeable=True, onchange=self._set_ess_mode))
-		self.add_item(IntegerItem("/Ess/DisableFeedIn", service.disable_feedin,
+		self.add_item(ForcedIntegerItem(self.timeout_reset,
+			"/Ess/DisableFeedIn", service.disable_feedin,
 			writeable=True, onchange=self._set_disable_feedin))
-		self.add_item(IntegerItem("/Ess/AcPowerSetpoint", None,
+		self.add_item(ForcedIntegerItem(self.timeout_reset,
+			"/Ess/AcPowerSetpoint", None,
 			writeable=True, onchange=self._set_setpoints))
 
 		# Inverter DC power control
 		self.add_item(IntegerItem("/Ess/UseInverterPowerSetpoint",
 			service.use_inverter_setpoint, writeable=True,
 			onchange=lambda v: self._sync_value("/Ess/UseInverterPowerSetpoint", v)))
-		self.add_item(IntegerItem("/Ess/InverterPowerSetpoint", None,
+		self.add_item(ForcedIntegerItem(self.timeout_reset,
+			"/Ess/InverterPowerSetpoint", None,
 			writeable=True, onchange=self._set_inverter_setpoints))
 
 		# Alarms
