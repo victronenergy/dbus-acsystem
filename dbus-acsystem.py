@@ -23,8 +23,6 @@ from aiovelib.client import Item as ClientItem
 from aiovelib.localsettings import SettingsService as SettingsClient
 from aiovelib.localsettings import Setting, SETTINGS_SERVICE
 
-CONTROL_TIMEOUT = 60
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -53,7 +51,7 @@ class ForcedIntegerItem(IntegerItem):
 	def set_value(self, v):
 		# Override so we can react on writes even if they don't change
 		# the internal value
-		self.onwrite()
+		self.onwrite(v)
 		return super().set_value(v)
 
 class Service(_Service):
@@ -62,8 +60,6 @@ class Service(_Service):
 		self.systeminstance = service.systeminstance
 		self.subservices = { service }
 		self.settings = None
-
-		self._control_timeout = -1
 
 		# Compulsory paths
 		self.add_item(IntegerItem("/ProductId", None))
@@ -116,20 +112,18 @@ class Service(_Service):
 			service.minsoc, writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", service.essmode,
 			writeable=True, onchange=self._set_ess_mode))
-		self.add_item(ForcedIntegerItem(self.timeout_reset,
-			"/Ess/DisableFeedIn", service.disable_feedin,
-			writeable=True, onchange=self._set_disable_feedin))
-		self.add_item(ForcedIntegerItem(self.timeout_reset,
-			"/Ess/AcPowerSetpoint", None,
-			writeable=True, onchange=self._set_setpoints))
+		self.add_item(ForcedIntegerItem(self._set_disable_feedin,
+			"/Ess/DisableFeedIn", service.disable_feedin, writeable=True))
+		self.add_item(ForcedIntegerItem(self._set_setpoints,
+			"/Ess/AcPowerSetpoint", None, writeable=True))
 
 		# Inverter DC power control
-		self.add_item(IntegerItem("/Ess/UseInverterPowerSetpoint",
-			service.use_inverter_setpoint, writeable=True,
-			onchange=lambda v: self._sync_value("/Ess/UseInverterPowerSetpoint", v)))
-		self.add_item(ForcedIntegerItem(self.timeout_reset,
-			"/Ess/InverterPowerSetpoint", None,
-			writeable=True, onchange=self._set_inverter_setpoints))
+		self.add_item(ForcedIntegerItem(
+			lambda v: self._sync_value("/Ess/UseInverterPowerSetpoint", v),
+			"/Ess/UseInverterPowerSetpoint",
+			service.use_inverter_setpoint, writeable=True))
+		self.add_item(ForcedIntegerItem(self._set_inverter_setpoints,
+			"/Ess/InverterPowerSetpoint", None, writeable=True))
 
 		# Alarms
 		for p in RsService.alarm_settings:
@@ -172,11 +166,9 @@ class Service(_Service):
 		return self._set_setting("/Settings/Ess/Mode", 0, 3, v)
 
 	def _set_disable_feedin(self, v):
-		self.timeout_reset()
 		return self._set_setting("/Ess/DisableFeedIn", 0, 1, v)
 
 	def _set_setpoints(self, v):
-		self.timeout_reset()
 		phasecount = self.get_item("/Ac/NumberOfPhases").value
 		# Per phase
 		try:
@@ -189,7 +181,6 @@ class Service(_Service):
 		return True
 
 	def _set_inverter_setpoints(self, v):
-		self.timeout_reset()
 		unitcount = len(self.subservices)
 		try:
 			setpoint = v / unitcount
@@ -229,21 +220,6 @@ class Service(_Service):
 	def update_summary(self, path):
 		with self as s:
 			s[path] = int(all(x.get_value(path) for x in self.subservices))
-
-	def timeout_reset(self):
-		self._control_timeout = CONTROL_TIMEOUT
-
-	def timeout_tick(self):
-		self._control_timeout = max(-1, self._control_timeout - 1)
-		if self._control_timeout == 0:
-			for service in self.subservices:
-				service.setpoint = 0
-				service.inverter_setpoint = 0
-				service.disable_feedin = 0
-				service.use_inverter_setpoint = 0
-			with self as s:
-				s["/Ess/AcPowerSetpoint"] = 0
-				s["/Ess/InverterPowerSetpoint"] = 0
 
 	@property
 	def acpowersetpoint(self):
@@ -541,9 +517,6 @@ class SettingsMonitor(Monitor):
 async def calculation_loop(monitor):
 	while True:
 		for leader in monitor.leaders:
-			# Reset anything that times out
-			leader.timeout_tick()
-
 			# Sum power and current values over all units in the system
 			values = defaultdict(lambda: None)
 			for service in leader.subservices:
