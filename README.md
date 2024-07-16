@@ -1,35 +1,29 @@
 # dbus-acsystem
 
-This reads data from Multi-RS systems (and potentially also others in future)
-and combines/summarises data for three-phase (and later parallel) units that
-are part of the same system.
+This service has a few features:
 
-Right now it keeps the ESS parameters (minsoc, mode) the same for the whole
-system. It keeps the AC input limit the same. It can be configured with
-a Custom Name.
+1. Aggregrate data from multiple individual inverter/chargers, filtered to be only the Multi RS and the HS19. Inverter RS is not included - will be looked at later.
+2. Synchronises certain settings and parameters between the individual devices.
 
+dbus-acsystem has no state keeping and no settings in local settings, aside from the custom name. Everything else is stored on the
+RS units themselves, and also configurable via VictronConnect.
 
 ## dBus paths
-### Settings
-This (mostly) mirrors the paths from the Multi-RS service. In all cases
-(except where noted), the setting is simply mirrored to all the units
-in the system.
+### Mode & Settings
+
+The paths available on the com.victronenergy.multi service are mostly mirrored onto com.victronenergy.acsystem.
+
+Also, dbus-acsystem synchronises them between the individual devices in the system, except where noted below (/Mode, /Ess/AcPowerSetpoint).
 
 Notes:
 * In the current version, the AC power setpoint
   is simply divided by the phase count and distributed to the individual
-  units.  A better implementation will be added to the Multi-RS firmware in
-  future.
-* The ESS mode values are:
-  * 0 = Optimised with BatteryLife
-  * 1 = Optimised without BatteryLife
-  * 2 = Keep Batteries Charged
-  * 3 = External Control
-* The MinimumSocLimit is simply copied to all individual units so they
-  all start/stop discharging at the same SOC.
+  units. A better implementation will be added to the Multi-RS firmware in
+  future, which is why this is kept simple.
+
 
 ```
-/Mode                         <--- Switch position, sent to one RS, RS already syncs this
+/Mode                         <--- Switch position. Sent to one RS only, the RSes sync this themselves
 /Ess/AcPowerSetpoint          <--- AC power setpoint
 /Ess/DisableFeedIn            <--- Disable grid feedin (at metering point)
 /Ess/UseInverterPowerSetpoint <--- InverterPowerSetpoint is used instead of
@@ -39,6 +33,11 @@ Notes:
                                    discharges the battery.
 /Settings/Ess/MinimumSocLimit <--- Minimum SOC limit for ESS
 /Settings/Ess/Mode            <--- ESS mode
+                                   * 0 = Optimised with BatteryLife
+                                   * 1 = Optimised without BatteryLife
+                                   * 2 = Keep Batteries Charged
+                                   * 3 = External Control
+
 /Settings/AlarmLevel/...      <--- Disable, warn, or only alarm.
 ```
 
@@ -51,10 +50,10 @@ Notes:
 
 ## Limits
 ```
-/Ac/In/n/CurrentLimit    <--- AC input current limit for input n
-/Ac/In/1/CurrentLimitIsAdjustable <--- Whether current limit can be adjusted.
-                                       All units must be adjustable otherwise
-                                       this will be 0.
+/Ac/In/n/CurrentLimit                 <--- AC input current limit for input n
+/Ac/In/1/CurrentLimitIsAdjustable     <--- Whether current limit can be adjusted.
+                                           All units must be adjustable otherwise
+                                           this will be 0.
 ```
 
 ## Data
