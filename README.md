@@ -15,13 +15,10 @@ The paths available on the com.victronenergy.multi service are mostly mirrored o
 
 Also, dbus-acsystem synchronises them between the individual devices in the system, except where noted below (/Mode, /Ess/AcPowerSetpoint).
 
-Notes:
-* In the current version, the AC power setpoint
-  is simply divided by the phase count and distributed to the individual
-  units. A better implementation will be added to the Multi-RS firmware in
-  future, which is why this is kept simple.
+In the current version, the AC power setpoint is simply divided by the phase count and distributed to the individual
+units. A better implementation will be added to the Multi-RS firmware in future, which is why this is kept simple.
 
-
+List of paths:
 ```
 /Mode                         <--- Switch position. Sent to one RS only, the RSes sync this themselves
 /Ess/AcPowerSetpoint          <--- AC power setpoint
