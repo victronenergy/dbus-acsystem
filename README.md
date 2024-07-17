@@ -20,6 +20,8 @@ units. A better implementation will be added to the Multi-RS firmware in future,
 
 List of paths:
 ```
+/Ac/In/n/Type                 <--- Type of AC input configured in VictronConnect,
+                                   1=Grid, 2=Genset, 3=Shore.
 /Mode                         <--- Switch position. Sent to one RS only, the RSes sync this themselves
 /Ess/AcPowerSetpoint          <--- AC power setpoint
 /Ess/DisableFeedIn            <--- Disable grid feedin (at metering point)
