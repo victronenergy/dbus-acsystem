@@ -214,6 +214,11 @@ class Service(_Service):
 			s["/Capabilities/HasDynamicEssSupport"] = int(all(
 				(x.firmwareversion or 0) >= 0x11713 for x in self.subservices))
 
+	def update_summaries(self):
+		with self as s:
+			for p in RsService.summaries:
+				self.update_summary(p)
+
 	def _remove_device_info(self, service):
 		self.remove_item(f"/Devices/{service.nad}/Service")
 		self.remove_item(f"/Devices/{service.nad}/Instance")
@@ -229,6 +234,7 @@ class Service(_Service):
 	def add_service(self, service):
 		self.subservices.add(service)
 		self.update_capabilities()
+		self.update_summaries()
 		self._add_device_info(service)
 
 	def remove_service(self, service):
