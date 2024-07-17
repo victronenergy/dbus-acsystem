@@ -22,6 +22,8 @@ class RsService(Client):
 	synchronised_paths=(
 		"/Ac/In/1/CurrentLimit",
 		"/Ac/In/2/CurrentLimit",
+		"/Ac/In/1/Type",
+		"/Ac/In/2/Type",
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ess/Mode"
 	)
@@ -39,9 +41,7 @@ class RsService(Client):
 	summaries=(
 		"/Capabilities/HasAcPassthroughSupport",
 		"/Ac/In/1/CurrentLimitIsAdjustable",
-		"/Ac/In/2/CurrentLimitIsAdjustable",
-		"/Ac/In/1/Type",
-		"/Ac/In/2/Type"
+		"/Ac/In/2/CurrentLimitIsAdjustable"
 	)
 	paths = {
 		"/ProductId",
@@ -150,3 +150,6 @@ class RsService(Client):
 
 	def ac_currentlimit(self, i):
 		return self.get_value(f"/Ac/In/{i}/CurrentLimit")
+
+	def input_type(self, i):
+		return self.get_value(f"/Ac/In/{i}/Type")

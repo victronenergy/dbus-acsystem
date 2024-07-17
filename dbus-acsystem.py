@@ -44,6 +44,14 @@ format_a = lambda v: f"{v:.1f} A"
 format_v = lambda v: f"{v:.2f} V"
 format_f = lambda v: f"{v:.1f} Hz"
 
+def format_input_type(v):
+	return {
+		0: 'Not used',
+		1: 'Grid',
+		2: 'Genset',
+		3: 'Shore'
+	}.get(v, 'Unknown')
+
 class ForcedIntegerItem(IntegerItem):
 	def __init__(self, onwrite, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -95,6 +103,16 @@ class Service(_Service):
 
 		for inp in range(1, 3):
 			self.add_item(DoubleItem(f"/Ac/In/{inp}/P", None, text=format_w))
+
+		# AC input types
+		self.add_item(IntegerItem("/Ac/In/1/Type", service.input_type(1),
+			writeable=True,
+			onchange=lambda v: self._sync_value("/Ac/In/1/Type", v),
+			text=format_input_type))
+		self.add_item(IntegerItem("/Ac/In/2/Type", service.input_type(2),
+			writeable=True,
+			onchange=lambda v: self._sync_value("/Ac/In/2/Type", v),
+			text=format_input_type))
 
 		# Custom Name
 		self.add_item(TextItem("/CustomName", None,
