@@ -1,0 +1,152 @@
+import asyncio
+from aiovelib.client import Service as Client
+from aiovelib.client import Item as ClientItem
+
+class RsItem(ClientItem):
+	""" Subclass to allow us to wait for an item to turn valid. """
+	def __init__(self):
+		super().__init__()
+		self._valid = asyncio.Future()
+
+	def update(self, value):
+		super().update(value)
+		if self.value is not None and not self._valid.done():
+			self._valid.set_result(None)
+
+	async def wait_for_valid(self):
+		return await self._valid
+
+class RsService(Client):
+	make_item = RsItem
+	servicetype = "com.victronenergy.multi"
+	synchronised_paths=(
+		"/Ac/In/1/CurrentLimit",
+		"/Ac/In/2/CurrentLimit",
+		"/Settings/Ess/MinimumSocLimit",
+		"/Settings/Ess/Mode"
+	)
+	alarm_settings=(
+		"/Settings/AlarmLevel/HighTemperature",
+		"/Settings/AlarmLevel/HighVoltage",
+		"/Settings/AlarmLevel/HighVoltageAcOut",
+		"/Settings/AlarmLevel/LowSoc",
+		"/Settings/AlarmLevel/LowVoltage",
+		"/Settings/AlarmLevel/LowVoltageAcOut",
+		"/Settings/AlarmLevel/Overload",
+		"/Settings/AlarmLevel/Ripple",
+		"/Settings/AlarmLevel/ShortCircuit"
+	)
+	summaries=(
+		"/Capabilities/HasAcPassthroughSupport",
+		"/Ac/In/1/CurrentLimitIsAdjustable",
+		"/Ac/In/2/CurrentLimitIsAdjustable",
+		"/Ac/In/1/Type",
+		"/Ac/In/2/Type"
+	)
+	paths = {
+		"/ProductId",
+		"/FirmwareVersion",
+		"/DeviceInstance",
+		"/Devices/0/Gateway",
+		"/Devices/0/Nad",
+		"/Ac/In/1/L1/P", "/Ac/In/2/L1/P", "/Ac/Out/L1/P",
+		"/Ac/In/1/L2/P", "/Ac/In/2/L2/P", "/Ac/Out/L2/P",
+		"/Ac/In/1/L3/P", "/Ac/In/2/L3/P", "/Ac/Out/L3/P",
+		"/Ac/In/1/L1/I", "/Ac/In/2/L1/I", "/Ac/Out/L1/I",
+		"/Ac/In/1/L2/I", "/Ac/In/2/L2/I", "/Ac/Out/L2/I",
+		"/Ac/In/1/L3/I", "/Ac/In/2/L3/I", "/Ac/Out/L3/I",
+		"/Ac/In/1/L1/V", "/Ac/In/2/L1/V", "/Ac/Out/L1/V",
+		"/Ac/In/1/L2/V", "/Ac/In/2/L2/V", "/Ac/Out/L2/V",
+		"/Ac/In/1/L3/V", "/Ac/In/2/L3/V", "/Ac/Out/L3/V",
+		"/Ac/In/1/L1/F", "/Ac/In/2/L1/F", "/Ac/Out/L1/F",
+		"/Ac/In/1/L2/F", "/Ac/In/2/L2/F", "/Ac/Out/L2/F",
+		"/Ac/In/1/L3/F", "/Ac/In/2/L3/F", "/Ac/Out/L3/F",
+		"/N2kSystemInstance", "/State", "/Mode",
+		"/Ac/ActiveIn/ActiveInput",
+		"/Ess/AcPowerSetpoint", "/Ess/InverterPowerSetpoint",
+		"/Ess/DisableFeedIn", "/Ess/UseInverterPowerSetpoint"
+	}.union(synchronised_paths).union(alarm_settings).union(summaries)
+
+	async def wait_for_valid(self, *paths):
+		# This will create the items (but mark them unseen) when you access
+		# the dictionary entry
+		await asyncio.gather(*(self.values[p].wait_for_valid() for p in paths))
+
+	@property
+	def deviceinstance(self):
+		return self.get_value("/DeviceInstance")
+
+	@property
+	def firmwareversion(self):
+		return self.get_value("/FirmwareVersion")
+
+	@property
+	def systeminstance(self):
+		return self.get_value("/N2kSystemInstance")
+
+	@property
+	def gateway(self):
+		return self.get_value("/Devices/0/Gateway") or ""
+
+	@property
+	def nad(self):
+		return self.get_value("/Devices/0/Nad")
+
+	@property
+	def mode(self):
+		return self.get_value("/Mode")
+
+	@mode.setter
+	def mode(self, v):
+		self.set_value_async("/Mode", v)
+
+	@property
+	def minsoc(self):
+		return self.get_value("/Settings/Ess/MinimumSocLimit")
+
+	@minsoc.setter
+	def minsoc(self, v):
+		self.set_value_async("/Settings/Ess/MinimumSocLimit", v)
+
+	@property
+	def essmode(self):
+		return self.get_value("/Settings/Ess/Mode")
+
+	@essmode.setter
+	def essmode(self, v):
+		self.set_value_async("/Settings/Ess/Mode", v)
+
+	@property
+	def disable_feedin(self):
+		return self.get_value("/Ess/DisableFeedIn")
+
+	@disable_feedin.setter
+	def disable_feedin(self, v):
+		self.set_value_async("/Ess/DisableFeedIn", v)
+
+	@property
+	def use_inverter_setpoint(self):
+		return self.get_value("/Ess/UseInverterPowerSetpoint")
+
+	@use_inverter_setpoint.setter
+	def use_inverter_setpoint(self, v):
+		self.set_value_async("/Ess/UseInverterPowerSetpoint", v)
+
+	@property
+	def setpoint(self):
+		return self.get_value("/Ess/AcPowerSetpoint")
+
+	@setpoint.setter
+	def setpoint(self, v):
+		self.set_value_async("/Ess/AcPowerSetpoint", v)
+
+	@property
+	def inverter_setpoint(self):
+		return self.get_value("/Ess/InverterPowerSetpoint")
+
+	@inverter_setpoint.setter
+	def inverter_setpoint(self, v):
+		self.set_value_async("/Ess/InverterPowerSetpoint", v)
+
+	def ac_currentlimit(self, i):
+		return self.get_value(f"/Ac/In/{i}/CurrentLimit")

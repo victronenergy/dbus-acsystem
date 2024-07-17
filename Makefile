@@ -1,7 +1,9 @@
 LIBDIR = $(bindir)/ext/aiovelib/aiovelib
 
 FILES = \
-	dbus-acsystem.py
+	dbus-acsystem.py \
+	rsservice.py \
+	settings.py
 
 LIBS = \
 	ext/aiovelib/aiovelib/client.py \
