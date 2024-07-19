@@ -54,6 +54,7 @@ class RsService(Client):
 		"/Capabilities/HasAcPassthroughSupport": SummaryAll(),
 		"/Ac/In/1/CurrentLimitIsAdjustable": SummaryAll(),
 		"/Ac/In/2/CurrentLimitIsAdjustable": SummaryAll(),
+		"/Ess/Sustain": SummaryAny(),
 	}
 	paths = {
 		"/ProductId",
