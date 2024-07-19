@@ -2,6 +2,18 @@ import asyncio
 from aiovelib.client import Service as Client
 from aiovelib.client import Item as ClientItem
 
+class Summary(object):
+	def summarise(self, path, services):
+		raise NotImplementedError("summarise")
+
+class SummaryAll(Summary):
+	def summarise(self, path, services):
+		return int(all(x.get_value(path) for x in services))
+
+class SummaryAny(Summary):
+	def summarise(self, path, services):
+		return int(any(x.get_value(path) for x in services))
+
 class RsItem(ClientItem):
 	""" Subclass to allow us to wait for an item to turn valid. """
 	def __init__(self):
@@ -38,11 +50,11 @@ class RsService(Client):
 		"/Settings/AlarmLevel/Ripple",
 		"/Settings/AlarmLevel/ShortCircuit"
 	)
-	summaries=(
-		"/Capabilities/HasAcPassthroughSupport",
-		"/Ac/In/1/CurrentLimitIsAdjustable",
-		"/Ac/In/2/CurrentLimitIsAdjustable"
-	)
+	summaries={
+		"/Capabilities/HasAcPassthroughSupport": SummaryAll(),
+		"/Ac/In/1/CurrentLimitIsAdjustable": SummaryAll(),
+		"/Ac/In/2/CurrentLimitIsAdjustable": SummaryAll(),
+	}
 	paths = {
 		"/ProductId",
 		"/FirmwareVersion",
