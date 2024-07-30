@@ -17,6 +17,14 @@ class SummaryAny(Summary):
 	def summarise(path, services):
 		return int(any(x.get_value(path) for x in services))
 
+class SummaryMax(Summary):
+	@staticmethod
+	def summarise(path, services):
+		try:
+			return max(y for y in (x.get_value(path) for x in services) if y is not None)
+		except ValueError:
+			return None
+
 class RsItem(ClientItem):
 	""" Subclass to allow us to wait for an item to turn valid. """
 	def __init__(self):
@@ -58,6 +66,10 @@ class RsService(Client):
 		"/Ac/In/1/CurrentLimitIsAdjustable": SummaryAll,
 		"/Ac/In/2/CurrentLimitIsAdjustable": SummaryAll,
 		"/Ess/Sustain": SummaryAny,
+
+		# Some alarms are summarised as well
+		"/Alarms/GridLost": SummaryMax,
+		"/Alarms/PhaseRotation": SummaryMax,
 	}
 	paths = {
 		"/ProductId",
