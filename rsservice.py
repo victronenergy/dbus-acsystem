@@ -47,7 +47,8 @@ class RsService(Client):
 		"/Ac/In/1/Type",
 		"/Ac/In/2/Type",
 		"/Settings/Ess/MinimumSocLimit",
-		"/Settings/Ess/Mode"
+		"/Settings/Ess/Mode",
+		"/Ac/Control/IgnoreAcIn1",
 	)
 	alarm_settings=(
 		"/Settings/AlarmLevel/HighTemperature",
@@ -176,6 +177,10 @@ class RsService(Client):
 	@inverter_setpoint.setter
 	def inverter_setpoint(self, v):
 		self.set_value_async("/Ess/InverterPowerSetpoint", v)
+
+	@property
+	def ignore_acin1(self):
+		return self.get_value("/Ac/Control/IgnoreAcIn1")
 
 	def ac_currentlimit(self, i):
 		return self.get_value(f"/Ac/In/{i}/CurrentLimit")
