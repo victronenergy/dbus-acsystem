@@ -3,25 +3,24 @@ from aiovelib.client import Service as Client
 from aiovelib.client import Item as ClientItem
 
 class Summary(object):
-	@staticmethod
-	def summarise(path, services):
+	def __init__(self, path):
+		self.path = path
+
+	def summarise(self, services):
 		raise NotImplementedError("summarise")
 
 class SummaryAll(Summary):
-	@staticmethod
-	def summarise(path, services):
-		return int(all(x.get_value(path) for x in services))
+	def summarise(self, services):
+		return int(all(x.get_value(self.path) for x in services))
 
 class SummaryAny(Summary):
-	@staticmethod
-	def summarise(path, services):
-		return int(any(x.get_value(path) for x in services))
+	def summarise(self, services):
+		return int(any(x.get_value(self.path) for x in services))
 
 class SummaryMax(Summary):
-	@staticmethod
-	def summarise(path, services):
+	def summarise(self, services):
 		try:
-			return max(y for y in (x.get_value(path) for x in services) if y is not None)
+			return max(y for y in (x.get_value(self.path) for x in services) if y is not None)
 		except ValueError:
 			return None
 
@@ -61,16 +60,18 @@ class RsService(Client):
 		"/Settings/AlarmLevel/Ripple",
 		"/Settings/AlarmLevel/ShortCircuit"
 	)
-	summaries={
-		"/Capabilities/HasAcPassthroughSupport": SummaryAll,
-		"/Ac/In/1/CurrentLimitIsAdjustable": SummaryAll,
-		"/Ac/In/2/CurrentLimitIsAdjustable": SummaryAll,
-		"/Ess/Sustain": SummaryAny,
-
-		# Some alarms are summarised as well
-		"/Alarms/GridLost": SummaryMax,
-		"/Alarms/PhaseRotation": SummaryMax,
-	}
+	# All items set
+	summaries={p: SummaryAll(p) for p in (
+		"/Capabilities/HasAcPassthroughSupport",
+		"/Ac/In/1/CurrentLimitIsAdjustable",
+		"/Ac/In/2/CurrentLimitIsAdjustable")}
+	# Any item set
+	summaries.update({p: SummaryAny(p) for p in (
+		"/Ess/Sustain",)})
+	# Max of items set
+	summaries.update({p: SummaryMax(p) for p in (
+		"/Alarms/GridLost",
+		"/Alarms/PhaseRotation")})
 	paths = {
 		"/ProductId",
 		"/FirmwareVersion",
