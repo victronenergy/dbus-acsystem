@@ -3,15 +3,18 @@ from aiovelib.client import Service as Client
 from aiovelib.client import Item as ClientItem
 
 class Summary(object):
-	def summarise(self, path, services):
+	@staticmethod
+	def summarise(path, services):
 		raise NotImplementedError("summarise")
 
 class SummaryAll(Summary):
-	def summarise(self, path, services):
+	@staticmethod
+	def summarise(path, services):
 		return int(all(x.get_value(path) for x in services))
 
 class SummaryAny(Summary):
-	def summarise(self, path, services):
+	@staticmethod
+	def summarise(path, services):
 		return int(any(x.get_value(path) for x in services))
 
 class RsItem(ClientItem):
@@ -51,10 +54,10 @@ class RsService(Client):
 		"/Settings/AlarmLevel/ShortCircuit"
 	)
 	summaries={
-		"/Capabilities/HasAcPassthroughSupport": SummaryAll(),
-		"/Ac/In/1/CurrentLimitIsAdjustable": SummaryAll(),
-		"/Ac/In/2/CurrentLimitIsAdjustable": SummaryAll(),
-		"/Ess/Sustain": SummaryAny(),
+		"/Capabilities/HasAcPassthroughSupport": SummaryAll,
+		"/Ac/In/1/CurrentLimitIsAdjustable": SummaryAll,
+		"/Ac/In/2/CurrentLimitIsAdjustable": SummaryAll,
+		"/Ess/Sustain": SummaryAny,
 	}
 	paths = {
 		"/ProductId",
