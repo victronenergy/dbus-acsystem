@@ -10,8 +10,12 @@ from argparse import ArgumentParser
 from collections import defaultdict
 
 # 3rd party
-from dbus_next.aio import MessageBus
-from dbus_next.constants import BusType
+try:
+	from dbus_fast.aio import MessageBus
+	from dbus_fast.constants import BusType
+except ImportError:
+	from dbus_next.aio import MessageBus
+	from dbus_next.constants import BusType
 
 # aiovelib
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'aiovelib'))
