@@ -72,7 +72,9 @@ class RsService(Client):
 	# Max of items set
 	summaries.update({p: SummaryMax(p) for p in (
 		"/Alarms/GridLost",
-		"/Alarms/PhaseRotation")})
+		"/Alarms/PhaseRotation",
+		"/Alarms/HighTemperature",
+		"/Alarms/Overload")})
 	paths = {
 		"/ProductId",
 		"/FirmwareVersion",
