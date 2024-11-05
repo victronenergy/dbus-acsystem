@@ -431,13 +431,24 @@ async def calculation_loop(monitor):
 
 			# Determine overall state, all units are expected to have the
 			# same state, otherwise it is unknown
-			for p in ("/State", "/Ac/ActiveIn/ActiveInput"):
+			for p in ("/State", ):
 				if len(set(s.get_value(p) for s in leader.subservices)) == 1:
 					for s in leader.subservices:
 						values[p] = s.get_value(p)
 						break
 				else:
 					values[p] = None
+
+			# Determine the active input. This value is 0, 1 or 240. Until
+			# we get the Quattro-RS, 1 is not possible, so this is 0 or 240.
+			# To keep this simple, use the maximum number reported. If the
+			# value is invalid, assume it is disconnected. This is so that
+			# dbus-generator does not think there is a communication problem.
+			p = "/Ac/ActiveIn/ActiveInput"
+			try:
+				values[p] = max(s.get_value(p) for s in leader.subservices)
+			except (TypeError, ValueError):
+				values[p] = 0xF0 # disconnected
 
 			with leader as s:
 				for p, v in values.items():
