@@ -24,6 +24,12 @@ class SummaryMax(Summary):
 		except ValueError:
 			return None
 
+class SummaryFirst(Summary):
+	def summarise(self, services):
+		for x in services:
+			return x.get_value(self.path)
+		return None
+
 class RsItem(ClientItem):
 	""" Subclass to allow us to wait for an item to turn valid. """
 	def __init__(self):
@@ -75,6 +81,9 @@ class RsService(Client):
 		"/Alarms/PhaseRotation",
 		"/Alarms/HighTemperature",
 		"/Alarms/Overload")})
+	# First/any
+	summaries.update({p: SummaryFirst(p) for p in (
+		"/Ess/ActiveSocLimit",)})
 	paths = {
 		"/ProductId",
 		"/FirmwareVersion",
