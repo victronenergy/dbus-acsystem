@@ -53,6 +53,7 @@ class RsService(Client):
 		"/Ac/In/1/Type",
 		"/Ac/In/2/Type",
 		"/Settings/Ess/MinimumSocLimit",
+		"/Settings/Ac/In/CurrentLimitEnergyMeter",
 		"/Settings/Ess/Mode",
 		"/Ac/Control/IgnoreAcIn1",
 	)

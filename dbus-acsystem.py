@@ -131,9 +131,6 @@ class Service(_Service):
 		self.add_item(DoubleItem("/Ac/In/2/CurrentLimit",
 			service.ac_currentlimit(2), writeable=True,
 			onchange=lambda v: self._set_ac_currentlimit(2, v)))
-		self.add_item(IntegerItem("/Ac/Control/IgnoreAcIn1",
-			service.ignore_acin1, writeable=True,
-			onchange=lambda v: self._sync_value("/Ac/Control/IgnoreAcIn1", v)))
 		self.add_item(DoubleItem("/Settings/Ess/MinimumSocLimit",
 			service.minsoc, writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", service.essmode,
@@ -142,6 +139,13 @@ class Service(_Service):
 			"/Ess/DisableFeedIn", service.disable_feedin, writeable=True))
 		self.add_item(ForcedIntegerItem(self._set_setpoints,
 			"/Ess/AcPowerSetpoint", None, writeable=True))
+
+		# Paths that are just synchronised
+		for item, path in (
+			(IntegerItem, "/Ac/Control/IgnoreAcIn1"),
+			(DoubleItem, "/Settings/Ac/In/CurrentLimitEnergyMeter")):
+			self.add_item(item(path, service.get_value(path), writeable=True,
+				onchange=lambda v, path=path: self._sync_value(path, v)))
 
 		# Inverter DC power control
 		self.add_item(ForcedIntegerItem(
