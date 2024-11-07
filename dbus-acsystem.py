@@ -35,6 +35,14 @@ def safe_add(*args):
 	args = [x for x in args if x is not None]
 	return sum(args) if args else None
 
+def safe_max(*args):
+	args = [x for x in args if x is not None]
+	return max(args) if args else None
+
+def safe_min(*args):
+	args = [x for x in args if x is not None]
+	return max(args) if args else None
+
 def safe_first(*args):
 	for a in args:
 		if a is not None:
@@ -104,6 +112,12 @@ class Service(_Service):
 			self.add_item(DoubleItem(f"/Ac/Out/L{phase}/F", None, text=format_f))
 
 		self.add_item(DoubleItem("/Ac/Out/P", None, text=format_w))
+
+		# DC summary
+		self.add_item(DoubleItem("/Dc/0/Voltage", None, text=format_v))
+		self.add_item(DoubleItem("/Dc/0/Current", None, text=format_a))
+		self.add_item(DoubleItem("/Dc/0/Power", None, text=format_w))
+		self.add_item(DoubleItem("/Soc", None, text=format_w))
 
 		for inp in range(1, 3):
 			self.add_item(DoubleItem(f"/Ac/In/{inp}/P", None, text=format_w))
@@ -402,6 +416,14 @@ async def calculation_loop(monitor):
 			# Sum power and current values over all units in the system
 			values = defaultdict(lambda: None)
 			for service in leader.subservices:
+				# DC values
+				p = "/Dc/0/Voltage"
+				values[p] = safe_max(values[p], service.get_value(p))
+				p = "/Soc"
+				values[p] = safe_min(values[p], service.get_value(p))
+				for p in ("/Dc/0/Power", "/Dc/0/Current"):
+					values[p] = safe_add(values[p], service.get_value(p))
+
 				for phase in range(1, 4):
 					for inp in range(1, 3):
 						a = f"/Ac/In/{inp}/P"

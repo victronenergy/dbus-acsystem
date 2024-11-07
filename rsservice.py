@@ -105,6 +105,8 @@ class RsService(Client):
 		"/Ac/In/1/L1/F", "/Ac/In/2/L1/F", "/Ac/Out/L1/F",
 		"/Ac/In/1/L2/F", "/Ac/In/2/L2/F", "/Ac/Out/L2/F",
 		"/Ac/In/1/L3/F", "/Ac/In/2/L3/F", "/Ac/Out/L3/F",
+		"/Dc/0/Voltage", "/Dc/0/Current", "/Dc/0/Power",
+		"/Soc",
 		"/N2kSystemInstance", "/State", "/Mode",
 		"/Ac/ActiveIn/ActiveInput",
 		"/Ess/AcPowerSetpoint", "/Ess/InverterPowerSetpoint",
