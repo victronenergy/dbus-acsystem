@@ -1,9 +1,11 @@
 import asyncio
 from aiovelib.client import Service as Client
 from aiovelib.client import Item as ClientItem
+from aiovelib.service import IntegerItem, DoubleItem
 
 class Summary(object):
-	def __init__(self, path):
+	def __init__(self, path, item=None):
+		self.make_item = IntegerItem if item is None else item
 		self.path = path
 
 	def summarise(self, services):
@@ -83,7 +85,7 @@ class RsService(Client):
 		"/Alarms/HighTemperature",
 		"/Alarms/Overload")})
 	# First/any
-	summaries.update({p: SummaryFirst(p) for p in (
+	summaries.update({p: SummaryFirst(p, DoubleItem) for p in (
 		"/Ess/ActiveSocLimit",)})
 	paths = {
 		"/ProductId",
