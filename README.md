@@ -30,6 +30,8 @@ List of paths:
 /Ess/InverterPowerSetpoint    <--- How much DC to convert from/to AC, positive
                                    values charges the battery, negative
                                    discharges the battery.
+/Ess/ActiveSocLimit           <--- The ESS SOC limit active right now, taking
+                                   BatteryLife into account.
 /Settings/Ess/MinimumSocLimit <--- Minimum SOC limit for ESS
 /Settings/Ess/Mode            <--- ESS mode
                                    * 0 = Optimised with BatteryLife
@@ -38,6 +40,8 @@ List of paths:
                                    * 3 = External Control
 
 /Settings/AlarmLevel/...      <--- Disable, warn, or only alarm.
+/Ess/Sustain                  <--- Indicates if any unit is in Sustain state
+
 ```
 
 ## Capabilities
@@ -49,10 +53,28 @@ List of paths:
 
 ## Limits
 ```
-/Ac/In/n/CurrentLimit                 <--- AC input current limit for input n
-/Ac/In/1/CurrentLimitIsAdjustable     <--- Whether current limit can be adjusted.
-                                           All units must be adjustable otherwise
-                                           this will be 0.
+/Ac/In/n/CurrentLimit                    <--- AC input current limit for input n
+/Ac/In/1/CurrentLimitIsAdjustable        <--- Whether current limit can be
+											  adjusted.  All units must be
+											  adjustable otherwise this will be
+											  0.
+/Settings/Ac/In/CurrentLimitEnergyMeter  <--- The current limit applied by the
+											  RS units at the grid meter, if
+											  one is installed.
+```
+
+## Controls
+```
+/Ac/Control/IgnoreAcIn1   <--- Used by Generator start/stop and maybe others.
+                               Ignore AC-in on all units in the system.
+```
+
+## Alarms
+```
+/Alarms/GridLost          <--- Grid was lost by at least one of the units
+/Alarms/HighTemperature   <--- Used by Generator start/stop, one or more units are running hot
+/Alarms/Overload          <--- Used by Generator start/stop, one or more units are overloaded
+/Alarms/PhaseRotation     <--- Phase rotation in 3-phase system is not correct
 ```
 
 ## Data
@@ -62,8 +84,11 @@ by the individual units.
 ```
 /State                   <--- Summarised state of the system
 /Ac/ActiveIn/ActiveInput <--- Active AC input(s) on RS units. All units are
-                              expected to be the same, otherwise this will
-                              show invalid.
+                              expected to be the same. If not connected this
+							  will show 0xF0 (240). If the units have different
+							  active inputs, the highest number will be shown,
+							  which with the current single-input models means
+							  this value is either 0 or 0xF0.
 /Ac/In/n/Lx/I            <--- Total current drawn on phase x, input n
 /Ac/In/n/Lx/P            <--- Total power drawn on phase x, input n
 /Ac/In/n/P               <--- Total power drawn over all phases
@@ -71,6 +96,11 @@ by the individual units.
 /Ac/NumberOfPhases       <--- Number of phases
 /Ac/Out/Lx/I             <--- Total current drawn on output
 /Ac/Out/Lx/P             <--- Total power drawn on output
+
+/Dc/0/Voltage     <--- A representative DC voltage as measured by the RS units
+/Dc/0/Current     <--- The total current drawn (negative) or charged (positive)
+/Dc/0/Power       <--- The total power drawn or charged
+/Soc              <--- State of charge, according to the RS units
 
 /Devices/x/Service     <--- List of service/instances that make up this service
 /Devices/x/Instance
