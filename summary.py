@@ -28,3 +28,19 @@ class SummaryFirst(Summary):
 		for x in leader.subservices:
 			return x.get_value(self.path)
 		return None
+
+class SettingMixin(object):
+	""" Enherit from this, and one of the other Summary methods to make
+	    one dependent on a setting.
+	    Eg: class SummarySomething(SettingMixin, SummaryMax): pass """
+	def __init__(self, setting, path, item=None):
+		self.setting = setting
+		super().__init__(path, item)
+
+	def summarise(self, leader):
+		if leader.settings.get_value(self.setting) == 1:
+			return super().summarise(leader)
+		return 0
+
+class SummaryOptionalAlarm(SettingMixin, SummaryMax):
+	pass
