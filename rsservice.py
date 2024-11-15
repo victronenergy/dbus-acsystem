@@ -1,36 +1,8 @@
 import asyncio
 from aiovelib.client import Service as Client
 from aiovelib.client import Item as ClientItem
-from aiovelib.service import IntegerItem, DoubleItem
-
-class Summary(object):
-	def __init__(self, path, item=None):
-		self.make_item = IntegerItem if item is None else item
-		self.path = path
-
-	def summarise(self, leader):
-		raise NotImplementedError("summarise")
-
-class SummaryAll(Summary):
-	def summarise(self, leader):
-		return int(all(x.get_value(self.path) for x in leader.subservices))
-
-class SummaryAny(Summary):
-	def summarise(self, leader):
-		return int(any(x.get_value(self.path) for x in leader.subservices))
-
-class SummaryMax(Summary):
-	def summarise(self, leader):
-		try:
-			return max(y for y in (x.get_value(self.path) for x in leader.subservices) if y is not None)
-		except ValueError:
-			return None
-
-class SummaryFirst(Summary):
-	def summarise(self, leader):
-		for x in leader.subservices:
-			return x.get_value(self.path)
-		return None
+from aiovelib.service import DoubleItem
+from summary import SummaryAll, SummaryAny, SummaryFirst, SummaryMax
 
 class RsItem(ClientItem):
 	""" Subclass to allow us to wait for an item to turn valid. """
