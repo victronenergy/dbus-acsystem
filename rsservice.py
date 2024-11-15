@@ -6,21 +6,21 @@ class Summary(object):
 	def __init__(self, path):
 		self.path = path
 
-	def summarise(self, services):
+	def summarise(self, leader):
 		raise NotImplementedError("summarise")
 
 class SummaryAll(Summary):
-	def summarise(self, services):
-		return int(all(x.get_value(self.path) for x in services))
+	def summarise(self, leader):
+		return int(all(x.get_value(self.path) for x in leader.subservices))
 
 class SummaryAny(Summary):
-	def summarise(self, services):
-		return int(any(x.get_value(self.path) for x in services))
+	def summarise(self, leader):
+		return int(any(x.get_value(self.path) for x in leader.subservices))
 
 class SummaryMax(Summary):
-	def summarise(self, services):
+	def summarise(self, leader):
 		try:
-			return max(y for y in (x.get_value(self.path) for x in services) if y is not None)
+			return max(y for y in (x.get_value(self.path) for x in leader.subservices) if y is not None)
 		except ValueError:
 			return None
 

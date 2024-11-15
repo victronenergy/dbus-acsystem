@@ -242,7 +242,7 @@ class Service(_Service):
 	def update_summaries(self):
 		with self as s:
 			for path, summary in RsService.summaries.items():
-				s[path] = summary.summarise(self.subservices)
+				s[path] = summary.summarise(self)
 
 	def _remove_device_info(self, service):
 		self.remove_item(f"/Devices/{service.nad}/Service")
@@ -250,7 +250,7 @@ class Service(_Service):
 
 	def update_summary(self, path):
 		with self as s:
-			s[path] = RsService.summaries[path].summarise(self.subservices)
+			s[path] = RsService.summaries[path].summarise(self)
 
 	@property
 	def acpowersetpoint(self):
