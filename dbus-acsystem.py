@@ -306,6 +306,9 @@ class Service(_Service):
 		except KeyError:
 			pass # Not a customname change
 
+		# Update all summaries, some might be settings dependent
+		self.update_summaries()
+
 	@property
 	def customname(self):
 		return self.get_item("/CustomName").value
