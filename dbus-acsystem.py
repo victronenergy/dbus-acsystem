@@ -275,6 +275,7 @@ class Service(_Service):
 		await self.settings.add_settings(
 			Setting("/Settings/AcSystem/{}/CustomName".format(
 				self.systeminstance), "", alias="customname"),
+			Setting("/Settings/Alarm/System/GridLost", 0, 0, 1),
 		)
 
 	async def init(self):
