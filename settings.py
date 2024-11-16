@@ -1,10 +1,5 @@
 from aiovelib.client import Monitor
-from aiovelib.localsettings import SettingsService as _SettingsClient
-
-class SettingsClient(_SettingsClient):
-	paths = {
-		"/Settings/Alarm/System/GridLost",
-	}
+from aiovelib.localsettings import SettingsService as SettingsClient
 
 class SettingsMonitor(Monitor):
 	def __init__(self, bus, **kwargs):
