@@ -330,16 +330,9 @@ class SystemMonitor(Monitor):
 		self._make_bus = make_bus
 
 	async def serviceAdded(self, service):
-		# We need these paths valid before we can do anything
-		await service.wait_for_valid(
-			"/N2kSystemInstance",
-			"/FirmwareVersion",
-			"/Mode",
-			"/Ac/In/1/CurrentLimit",
-			"/Settings/Ess/MinimumSocLimit",
-			"/Settings/Ess/Mode",
-			"/Ess/DisableFeedIn",
-		)
+		# We have to wait for some paths to become valid before
+		# we can really place or sync things.
+		await service.wait_for_essential_paths()
 
 		instance = service.systeminstance
 		if instance is None:

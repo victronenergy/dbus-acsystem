@@ -95,6 +95,18 @@ class RsService(Client):
 		# the dictionary entry
 		await asyncio.gather(*(self.values[p].wait_for_valid() for p in paths))
 
+	async def wait_for_essential_paths(self):
+		# We need these paths valid before we can do anything
+		await self.wait_for_valid(
+			"/N2kSystemInstance",
+			"/FirmwareVersion",
+			"/Mode",
+			"/Ac/In/1/CurrentLimit",
+			"/Settings/Ess/MinimumSocLimit",
+			"/Settings/Ess/Mode",
+			"/Ess/DisableFeedIn",
+		)
+
 	@property
 	def deviceinstance(self):
 		return self.get_value("/DeviceInstance")
