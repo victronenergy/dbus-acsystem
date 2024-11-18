@@ -141,10 +141,10 @@ class Service(_Service):
 			writeable=True, onchange=self._set_mode))
 		self.add_item(DoubleItem("/Ac/In/1/CurrentLimit",
 			service.ac_currentlimit(1), writeable=True,
-			onchange=lambda v: self._set_ac_currentlimit(1, v)))
+			onchange=self._set_ac1_currentlimit))
 		self.add_item(DoubleItem("/Ac/In/2/CurrentLimit",
 			service.ac_currentlimit(2), writeable=True,
-			onchange=lambda v: self._set_ac_currentlimit(2, v)))
+			onchange=self._set_ac2_currentlimit))
 		self.add_item(DoubleItem("/Settings/Ess/MinimumSocLimit",
 			service.minsoc, writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", service.essmode,
@@ -197,10 +197,32 @@ class Service(_Service):
 				return True
 		return False
 
-	def _set_ac_currentlimit(self, inp, v):
+	def _max_ac_currentlimit(self, inp):
+		try:
+			return min(x for x in (s.max_ac_currentlimit(inp)
+				for s in self.subservices) if x is not None)
+		except ValueError:
+			return None
+
+	async def _set_ac1_currentlimit(self, item, v):
+		self._set_ac_currentlimit(item, 1, v)
+
+	async def _set_ac2_currentlimit(self, item, v):
+		self._set_ac_currentlimit(item, 2, v)
+
+	def _set_ac_currentlimit(self, item, inp, v):
 		if all(s.get_value(f"/Ac/In/{inp}/CurrentLimitIsAdjustable") == 1 \
 				for s in self.subservices):
-			return self._sync_value(f"/Ac/In/{inp}/CurrentLimit", v)
+			# Clamp to the maximum
+			try:
+				v = min(self._max_ac_currentlimit(inp), v)
+			except ValueError:
+				pass
+
+			# Set our local value to the smaller value, and send
+			# ItemsChanged
+			if self._sync_value(f"/Ac/In/{inp}/CurrentLimit", v):
+				item.set_local_value(v)
 		return False
 
 	def _set_minsoc(self, v):
@@ -333,6 +355,7 @@ class SystemMonitor(Monitor):
 		# We have to wait for some paths to become valid before
 		# we can really place or sync things.
 		await service.wait_for_essential_paths()
+		await service.fetch_ac_max_limits()
 
 		instance = service.systeminstance
 		if instance is None:
