@@ -1,6 +1,6 @@
 #!/usr/bin/python3
   
-VERSION = "0.20"
+VERSION = "0.20-r1"
 
 import sys
 import os
