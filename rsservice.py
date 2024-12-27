@@ -125,6 +125,10 @@ class RsService(Client):
 		return self.get_value("/FirmwareVersion")
 
 	@property
+	def productid(self):
+		return self.get_value("/ProductId")
+
+	@property
 	def systeminstance(self):
 		return self.get_value("/N2kSystemInstance")
 
