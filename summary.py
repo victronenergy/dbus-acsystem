@@ -51,5 +51,8 @@ class SettingMixin(object):
 			return super().summarise(leader)
 		return self._default
 
+	def initial(self, v):
+		return self._default
+
 class SummaryOptionalAlarm(SettingMixin, SummaryMax):
 	_default = 0

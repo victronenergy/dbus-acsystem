@@ -384,6 +384,7 @@ class SystemMonitor(Monitor):
 
 			# Register on dbus, connect to localsettings
 			await asyncio.gather(leader.register(), leader.init())
+			leader.update_summaries()
 			self._leaders[instance].set_result(leader)
 
 	async def serviceRemoved(self, service):
