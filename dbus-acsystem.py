@@ -1,6 +1,6 @@
 #!/usr/bin/python3
   
-VERSION = "0.27"
+VERSION = "0.28"
 
 import sys
 import os
