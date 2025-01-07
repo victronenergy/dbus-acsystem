@@ -8,6 +8,14 @@ class Summary(object):
 	def summarise(self, leader):
 		raise NotImplementedError("summarise")
 
+	def initial(self, v):
+		""" Initial value for the summary. Uses `v` as a hunt, but can
+		    replace it with something else. This is so we can override
+		    the behaviour for some summaries and delay the decision
+		    instead of starting with the first value from the first
+		    RS device."""
+		return v
+
 class SummaryAll(Summary):
 	def summarise(self, leader):
 		return int(all(x.get_value(self.path) for x in leader.subservices))

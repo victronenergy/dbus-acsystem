@@ -159,8 +159,8 @@ class Service(_Service):
 		# Capabilities, other summarised paths
 		self.add_item(IntegerItem("/Capabilities/HasDynamicEssSupport", 0))
 		self.update_capabilities()
-		for p in RsService.summaries:
-			self.add_item(IntegerItem(p, service.get_value(p)))
+		for p, s in RsService.summaries.items():
+			self.add_item(IntegerItem(p, s.initial(service.get_value(p))))
 
 	def _set_setting(self, setting, _min, _max, v):
 		if _min <= v <= _max:
