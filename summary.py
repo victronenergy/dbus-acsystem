@@ -33,6 +33,7 @@ class SettingMixin(object):
 	""" Enherit from this, and one of the other Summary methods to make
 	    one dependent on a setting.
 	    Eg: class SummarySomething(SettingMixin, SummaryMax): pass """
+	_default = None
 	def __init__(self, setting, path, item=None):
 		self.setting = setting
 		super().__init__(path, item)
@@ -40,7 +41,7 @@ class SettingMixin(object):
 	def summarise(self, leader):
 		if leader.settings.get_value(self.setting) == 1:
 			return super().summarise(leader)
-		return 0
+		return self._default
 
 class SummaryOptionalAlarm(SettingMixin, SummaryMax):
-	pass
+	_default = 0
