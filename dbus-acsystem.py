@@ -277,7 +277,7 @@ class Service(_Service):
 	def update_capabilities(self):
 		with self as s:
 			s["/Capabilities/HasDynamicEssSupport"] = int(all(
-				((x.productid or 0) == 0xA443 and (x.firmwareversion or 0) >= 0x11713) or # Multi RS
+				((0xA440 <= (x.productid or 0) <= 0xA44F) and (x.firmwareversion or 0) >= 0x11713) or # Multi RS
 				((x.productid or 0) == 0xA480 and (x.firmwareversion or 0) >= 0x10043)    # HS-19
 				for x in self.subservices))
 
