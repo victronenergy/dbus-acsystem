@@ -258,9 +258,10 @@ class Service(_Service):
 		return True
 
 	def _set_customname(self, v):
-		cn = self.settings.get_value(self.settings.alias("customname"))
+		p = "/Settings/AcSystem/{}/CustomName".format(self.systeminstance)
+		cn = self.settings.get_value(p)
 		if cn != v:
-			self.settings.set_value_async(self.settings.alias("customname"), v)
+			self.settings.set_value_async(p, v)
 		return True
 
 	def _add_device_info(self, service):
@@ -316,18 +317,19 @@ class Service(_Service):
 			settingsmonitor.wait_for_service(SETTINGS_SERVICE), 5)
 		await self.settings.add_settings(
 			Setting("/Settings/AcSystem/{}/CustomName".format(
-				self.systeminstance), "", alias="customname"),
+				self.systeminstance), ""),
 			Setting("/Settings/Alarm/System/GridLost", 0, 0, 1),
 		)
 
 	async def init(self):
 		await self.wait_for_settings()
 		self.customname = self.settings.get_value(
-			self.settings.alias("customname"))
+			"/Settings/AcSystem/{}/CustomName".format(self.systeminstance))
 
 	def itemsChanged(self, service, values):
 		try:
-			self.customname = values[self.settings.alias('customname')]
+			self.customname = values[
+				"/Settings/AcSystem/{}/CustomName".format(self.systeminstance)]
 		except KeyError:
 			pass # Not a customname change
 
