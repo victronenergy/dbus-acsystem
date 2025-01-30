@@ -55,6 +55,7 @@ format_w = lambda v: f"{v:.0f} W"
 format_a = lambda v: f"{v:.1f} A"
 format_v = lambda v: f"{v:.2f} V"
 format_f = lambda v: f"{v:.1f} Hz"
+format_p = lambda v: f"{v:.0f} %"
 
 def format_input_type(v):
 	return {
@@ -117,7 +118,7 @@ class Service(_Service):
 		self.add_item(DoubleItem("/Dc/0/Voltage", None, text=format_v))
 		self.add_item(DoubleItem("/Dc/0/Current", None, text=format_a))
 		self.add_item(DoubleItem("/Dc/0/Power", None, text=format_w))
-		self.add_item(DoubleItem("/Soc", None, text=format_w))
+		self.add_item(DoubleItem("/Soc", None, text=format_p))
 
 		for inp in range(1, 3):
 			self.add_item(DoubleItem(f"/Ac/In/{inp}/P", None, text=format_w))
