@@ -93,7 +93,6 @@ class Service(_Service):
 		self.add_item(TextItem("/Mgmt/Connection", "local"))
 		self.add_item(IntegerItem("/Connected", 1))
 
-		self.add_item(IntegerItem("/State", None))
 		self.add_item(IntegerItem("/Ac/ActiveIn/ActiveInput", None))
 		self._add_device_info(service)
 
@@ -480,16 +479,6 @@ async def calculation_loop(monitor):
 
 			# Number of phases, we will use the outputs to detect that
 			values["/Ac/NumberOfPhases"] = sum(int(values[f"/Ac/Out/L{x}/P"] is not None) for x in range(1, 4))
-
-			# Determine overall state, all units are expected to have the
-			# same state, otherwise it is unknown
-			for p in ("/State", ):
-				if len(set(s.get_value(p) for s in leader.subservices)) == 1:
-					for s in leader.subservices:
-						values[p] = s.get_value(p)
-						break
-				else:
-					values[p] = None
 
 			# Determine the active input. This value is 0, 1 or 240. Until
 			# we get the Quattro-RS, 1 is not possible, so this is 0 or 240.

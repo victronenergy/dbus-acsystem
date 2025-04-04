@@ -3,7 +3,7 @@ from aiovelib.client import Service as Client
 from aiovelib.client import Item as ClientItem
 from aiovelib.service import DoubleItem
 from summary import (SummaryAll, SummaryAny, SummaryFirst, SummaryMax,
-	SummaryOptionalAlarm)
+	SummaryOptionalAlarm, SummaryDeviceState)
 
 class RsItem(ClientItem):
 	""" Subclass to allow us to wait for an item to turn valid. """
@@ -59,6 +59,10 @@ class RsService(Client):
 	# First/any
 	summaries.update({p: SummaryFirst(p, DoubleItem) for p in (
 		"/Ess/ActiveSocLimit",)})
+
+	# System state
+	summaries.update({p: SummaryDeviceState(p) for p in (
+		"/State", )})
 
 	# Controlled by settings
 	for p, s in [("/Alarms/GridLost", "/Settings/Alarm/System/GridLost"),]:

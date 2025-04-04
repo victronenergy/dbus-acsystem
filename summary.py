@@ -1,5 +1,30 @@
 from aiovelib.service import IntegerItem
 
+# RS states
+# generic states:
+#N2K_CONVERTER_STATE_UNAVAILABLE = 0xFF
+#N2K_CONVERTER_STATE_OFF = 0
+N2K_CONVERTER_STATE_FAULT = 2 # non recoverable, needs a power cycle
+N2K_CONVERTER_STATE_BLOCKED = 0xFA # firmware update
+
+# inverter is active, charger is not active:
+N2K_CONVERTER_STATE_PASSTHRU = 8
+N2K_CONVERTER_STATE_INVERTING = 9
+N2K_CONVERTER_STATE_ASSISTING = 10
+
+# charger active (mppt active, ac pv present or grid connected):
+#N2K_CONVERTER_STATE_WAKEUP = 0xF5 # charger starting
+#N2K_CONVERTER_STATE_BULK = 3
+#N2K_CONVERTER_STATE_ABSORPTION = 4
+#N2K_CONVERTER_STATE_FLOAT = 5
+#N2K_CONVERTER_STATE_STORAGE = 6
+#N2K_CONVERTER_STATE_EQUALIZE = 7
+#N2K_CONVERTER_STATE_PSU = 11
+#N2K_CONVERTER_STATE_REPEATED_ABSORPTION = 0xF6
+#N2K_CONVERTER_STATE_AUTO_EQUALIZE = 0xF7
+#N2K_CONVERTER_STATE_BATTERYSAFE = 0xF8
+#N2K_CONVERTER_STATE_EXTERNAL_CONTROL = 0xFC # bms or gx
+
 class Summary(object):
 	def __init__(self, path, item=None):
 		self.make_item = IntegerItem if item is None else item
@@ -56,3 +81,28 @@ class SettingMixin(object):
 
 class SummaryOptionalAlarm(SettingMixin, SummaryMax):
 	_default = 0
+
+class SummaryDeviceState(Summary):
+	""" Sumarises the state of multiple RS units, so that the most relevant
+	    state is chosen. """
+	def summarise(self, leader):
+		states = set(x.get_value(self.path) for x in leader.subservices)
+
+		# Just one state? Pass through.
+		if len(states) == 1:
+			return next(iter(states))
+
+		# if any unit is in such a state, in this order, the whole cluster is
+		# considered to be in this state.
+		for s in (N2K_CONVERTER_STATE_FAULT, N2K_CONVERTER_STATE_BLOCKED,
+				N2K_CONVERTER_STATE_INVERTING, N2K_CONVERTER_STATE_PASSTHRU,
+				N2K_CONVERTER_STATE_ASSISTING):
+			if s in states:
+				return s
+
+		# Otherwise units are in varying levels of charging, and we can just
+		# return the min state, typically 3 (bulk)
+		try:
+			return min(iter(states))
+		except ValueError:
+			return None
