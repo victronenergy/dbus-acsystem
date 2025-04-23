@@ -30,6 +30,7 @@ class RsService(Client):
 		"/Settings/Ess/MinimumSocLimit",
 		"/Settings/Ac/In/CurrentLimitEnergyMeter",
 		"/Settings/Ess/Mode",
+		"/Settings/Ess/GridSetpoint", # New path
 		"/Ac/Control/IgnoreAcIn1",
 	)
 	alarm_settings=(
@@ -112,6 +113,7 @@ class RsService(Client):
 			"/Ac/In/1/CurrentLimit",
 			"/Settings/Ess/MinimumSocLimit",
 			"/Settings/Ess/Mode",
+#			"/Settings/Ess/GridSetpoint", # New path
 			"/Ess/DisableFeedIn",
 		)
 
@@ -169,6 +171,14 @@ class RsService(Client):
 		self.set_value_async("/Settings/Ess/Mode", v)
 
 	@property
+	def gridsetpoint(self): # New property
+		return self.get_value("/Settings/Ess/GridSetpoint")
+
+	@gridsetpoint.setter # New property
+	def gridsetpoint(self, v):
+		self.set_value_async("/Settings/Ess/GridSetpoint", v)
+
+	@property
 	def disable_feedin(self):
 		return self.get_value("/Ess/DisableFeedIn")
 
@@ -212,3 +222,4 @@ class RsService(Client):
 
 	def max_ac_currentlimit(self, i):
 		return self._max_ac_currentlimit[i-1]
+
