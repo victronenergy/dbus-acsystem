@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-  
-VERSION = "0.32"
+
+VERSION = "0.33"
 
 import sys
 import os
@@ -149,6 +149,8 @@ class Service(_Service):
 			service.minsoc, writeable=True, onchange=self._set_minsoc))
 		self.add_item(IntegerItem("/Settings/Ess/Mode", service.essmode,
 			writeable=True, onchange=self._set_ess_mode))
+		self.add_item(IntegerItem("/Settings/Ess/GridSetpoint", service.gridsetpoint,
+			writeable=True, onchange=self._set_gridsetpoint)) # New path
 		self.add_item(ForcedIntegerItem(self._set_disable_feedin,
 			"/Ess/DisableFeedIn", service.disable_feedin, writeable=True))
 		self.add_item(ForcedIntegerItem(self._set_setpoints,
@@ -230,6 +232,10 @@ class Service(_Service):
 
 	def _set_ess_mode(self, v):
 		return self._set_setting("/Settings/Ess/Mode", 0, 3, v)
+
+	def _set_gridsetpoint(self, v): # New method
+		# No min/max check, just sync
+		return self._set_setting("/Settings/Ess/GridSetpoint", -50000, 50000, v)
 
 	def _set_disable_feedin(self, v):
 		return self._set_setting("/Ess/DisableFeedIn", 0, 1, v)
@@ -471,9 +477,9 @@ async def calculation_loop(monitor):
 						values[p] = safe_first(values[p], service.get_value(p))
 
 			# Number of inputs/phases
-			has_input1 = any(values[f"/Ac/In/1/L{x}/P"] is not None 
+			has_input1 = any(values[f"/Ac/In/1/L{x}/P"] is not None
 				for x in range (1, 4))
-			has_input2 = any(values[f"/Ac/In/2/L{x}/P"] is not None 
+			has_input2 = any(values[f"/Ac/In/2/L{x}/P"] is not None
 				for x in range (1, 4))
 			values["/Ac/NumberOfAcInputs"] = int(has_input1) + int (has_input2)
 
