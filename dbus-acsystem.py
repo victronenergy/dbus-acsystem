@@ -307,6 +307,8 @@ class Service(_Service):
 
 	def remove_service(self, service):
 		self.subservices.discard(service)
+		self.update_capabilities()
+		self.update_summaries()
 		self._remove_device_info(service)
 
 	async def wait_for_settings(self):
