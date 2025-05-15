@@ -360,7 +360,9 @@ class SystemMonitor(Monitor):
 	async def serviceAdded(self, service):
 		# We have to wait for some paths to become valid before
 		# we can really place or sync things.
+		logger.debug("Waiting for essential paths")
 		await service.wait_for_essential_paths()
+		logger.debug("Fetching AC limits")
 		await service.fetch_ac_max_limits()
 
 		instance = service.systeminstance
