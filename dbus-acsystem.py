@@ -235,10 +235,10 @@ class Service(_Service):
 		return self._set_setting("/Ess/DisableFeedIn", 0, 1, v)
 
 	def _set_setpoints(self, v):
-		phasecount = self.get_item("/Ac/NumberOfPhases").value
+		unitcount = len(self.subservices)
 		# Per phase
 		try:
-			setpoint = v / phasecount
+			setpoint = v / unitcount
 		except (TypeError, ZeroDivisionError):
 			pass
 		else:
