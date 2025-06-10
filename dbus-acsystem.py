@@ -157,7 +157,8 @@ class Service(_Service):
 		# Paths that are just synchronised
 		for item, path in (
 			(IntegerItem, "/Ac/Control/IgnoreAcIn1"),
-			(DoubleItem, "/Settings/Ac/In/CurrentLimitEnergyMeter")):
+			(DoubleItem, "/Settings/Ac/In/CurrentLimitEnergyMeter"),
+			(IntegerItem, "/Pv/Disable")):
 			self.add_item(item(path, service.get_value(path), writeable=True,
 				onchange=lambda v, path=path: self._sync_value(path, v)))
 

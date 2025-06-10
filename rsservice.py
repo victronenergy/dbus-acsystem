@@ -31,6 +31,7 @@ class RsService(Client):
 		"/Settings/Ac/In/CurrentLimitEnergyMeter",
 		"/Settings/Ess/Mode",
 		"/Ac/Control/IgnoreAcIn1",
+		"/Pv/Disable",
 	)
 	alarm_settings=(
 		"/Settings/AlarmLevel/HighTemperature",
