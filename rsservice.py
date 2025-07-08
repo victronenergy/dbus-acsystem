@@ -33,6 +33,7 @@ class RsService(Client):
 		"/Ac/Control/IgnoreAcIn1",
 		"/Pv/Disable",
 		"/Ess/DisableDischarge",
+		"/Ess/DisableCharge",
 	)
 	alarm_settings=(
 		"/Settings/AlarmLevel/HighTemperature",
