@@ -58,7 +58,8 @@ class RsService(Client):
 	summaries.update({p: SummaryMax(p) for p in (
 		"/Alarms/PhaseRotation",
 		"/Alarms/HighTemperature",
-		"/Alarms/Overload")})
+		"/Alarms/Overload",
+		"/Ac/NoFeedInReason")})
 	# First/any
 	summaries.update({p: SummaryFirst(p, DoubleItem) for p in (
 		"/Ess/ActiveSocLimit",)})
