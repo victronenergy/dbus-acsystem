@@ -62,6 +62,12 @@ class SummaryFirst(Summary):
 			return x.get_value(self.path)
 		return None
 
+class SummarySum(Summary):
+	def summarise(self, leader):
+		v = [y for y in (
+			x.get_value(self.path) for x in leader.subservices) if y is not None]
+		return sum(v) if v else None
+
 class SettingMixin(object):
 	""" Enherit from this, and one of the other Summary methods to make
 	    one dependent on a setting.
