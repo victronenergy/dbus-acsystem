@@ -162,6 +162,22 @@ class RsService(Client):
 		self.set_value_async("/Mode", v)
 
 	@property
+	def voltage(self):
+		return self.get_value("/Dc/0/Voltage")
+
+	@property
+	def power(self):
+		return self.get_value("/Dc/0/Power")
+
+	@property
+	def current(self):
+		return self.get_value("/Dc/0/Current")
+
+	@property
+	def soc(self):
+		return self.get_value("/Soc")
+
+	@property
 	def minsoc(self):
 		return self.get_value("/Settings/Ess/MinimumSocLimit")
 

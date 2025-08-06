@@ -449,12 +449,10 @@ async def calculation_loop(monitor):
 			values = defaultdict(lambda: None)
 			for service in leader.subservices:
 				# DC values
-				p = "/Dc/0/Voltage"
-				values[p] = safe_max(values[p], service.get_value(p))
-				p = "/Soc"
-				values[p] = safe_min(values[p], service.get_value(p))
-				for p in ("/Dc/0/Power", "/Dc/0/Current"):
-					values[p] = safe_add(values[p], service.get_value(p))
+				values[p] = safe_max(values[p := "/Dc/0/Voltage"], service.voltage)
+				values[p] = safe_min(values[p := "/Soc"], service.soc)
+				values[p] = safe_add(values[p := "/Dc/0/Power"], service.power)
+				values[p] = safe_add(values[p := "/Dc/0/Current"], service.current)
 
 				for phase in range(1, 4):
 					for inp in range(1, 3):
