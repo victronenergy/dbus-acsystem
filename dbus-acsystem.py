@@ -360,6 +360,13 @@ class SystemMonitor(Monitor):
 		self._leaders = {}
 		self._make_bus = make_bus
 
+	def get_leader(self, systeminstance):
+		try:
+			return self._leaders[systeminstance].result()
+		except (KeyError, asyncio.InvalidStateError):
+			pass
+		return None
+
 	async def serviceAdded(self, service):
 		# We have to wait for some paths to become valid before
 		# we can really place or sync things.
@@ -415,11 +422,7 @@ class SystemMonitor(Monitor):
 		if '/N2kSystemInstance' in values.keys():
 			asyncio.create_task(self.systemInstanceChanged(service))
 			return
-		try:
-			leader = self._leaders[service.systeminstance].result()
-		except (KeyError, asyncio.InvalidStateError):
-			pass
-		else:
+		if (leader := self.get_leader(service.systeminstance)) is not None:
 			# Don't accept updates from services that are not part of the
 			# system yet.
 			if service not in leader.subservices:
