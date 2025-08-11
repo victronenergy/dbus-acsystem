@@ -153,7 +153,7 @@ class Service(_Service):
 		self.add_item(ForcedIntegerItem(self._set_disable_feedin,
 			"/Ess/DisableFeedIn", service.disable_feedin, writeable=True))
 		self.add_item(ForcedIntegerItem(self._set_setpoints,
-			"/Ess/AcPowerSetpoint", None, writeable=True))
+			"/Ess/AcPowerSetpoint", self._get_total_setpoint(), writeable=True))
 
 		# Paths that are just synchronised
 		for item, path in (
@@ -270,6 +270,7 @@ class Service(_Service):
 		with self as s:
 			for path, summary in RsService.summaries.items():
 				s[path] = summary.summarise(self)
+			s["/Ess/AcPowerSetpoint"] = self._get_total_setpoint()
 
 	def _remove_device_info(self, service):
 		self.remove_item(f"/Devices/{service.nad}/Service")
@@ -282,6 +283,13 @@ class Service(_Service):
 	@property
 	def acpowersetpoint(self):
 		return self.get_item("/Ess/AcPowerSetpoint").value
+
+	def _get_total_setpoint(self):
+		try:
+			return int(sum(s.setpoint for s in self.subservices if s.setpoint is not None))
+		except TypeError:
+			pass
+		return None
 
 	def add_service(self, service):
 		self.subservices.add(service)
