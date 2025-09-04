@@ -105,7 +105,6 @@ class RsService(Client):
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self._max_ac_currentlimit = [None, None]
 
 	async def wait_for_valid(self, *paths):
 		# This will create the items (but mark them unseen) when you access
@@ -123,11 +122,6 @@ class RsService(Client):
 			"/Settings/Ess/Mode",
 			"/Ess/DisableFeedIn",
 		)
-
-	async def fetch_ac_max_limits(self):
-		l1 = await self.fetch_max("/Ac/In/1/CurrentLimit") or None
-		l2 = await self.fetch_max("/Ac/In/2/CurrentLimit") or None
-		self._max_ac_currentlimit = [l1, l2]
 
 	@property
 	def deviceinstance(self):
@@ -234,6 +228,3 @@ class RsService(Client):
 
 	def input_type(self, i):
 		return self.get_value(f"/Ac/In/{i}/Type")
-
-	def max_ac_currentlimit(self, i):
-		return self._max_ac_currentlimit[i-1]
