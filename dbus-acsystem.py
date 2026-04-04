@@ -551,7 +551,8 @@ def main():
 		"session": BusType.SESSION
 	}.get(args.dbus, BusType.SYSTEM)
 
-	mainloop = asyncio.get_event_loop()
+	mainloop = asyncio.new_event_loop()
+	asyncio.set_event_loop(mainloop)
 	logger.info("Starting main loop")
 	try:
 		asyncio.get_event_loop().run_until_complete(amain(bus_type))
