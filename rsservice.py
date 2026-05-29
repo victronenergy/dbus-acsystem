@@ -238,6 +238,10 @@ class RsService(Client):
 		self.set_value_async("/Ess/BatteryDischargeSetpoint", v)
 
 	@property
+	def ac_connected(self):
+		return self.get_value("/Ac/ActiveIn/ActiveInput") != 0xF0
+
+	@property
 	def ignore_acin1(self):
 		return self.get_value("/Ac/Control/IgnoreAcIn1")
 

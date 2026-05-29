@@ -230,14 +230,13 @@ class Service(_Service):
 		return self._set_setting("/Ess/DisableFeedIn", 0, 1, v)
 
 	def _set_setpoints(self, v):
-		unitcount = len(self.subservices)
-		# Per phase
+		connected = [s for s in self.subservices if s.ac_connected]
 		try:
-			setpoint = v / unitcount
+			setpoint = v / len(connected)
 		except (TypeError, ZeroDivisionError):
 			pass
 		else:
-			for service in self.subservices:
+			for service in connected:
 				service.setpoint = setpoint
 		return True
 
@@ -312,7 +311,7 @@ class Service(_Service):
 
 	def _get_total_setpoint(self):
 		try:
-			return int(sum(s.setpoint for s in self.subservices if s.setpoint is not None))
+			return int(sum(s.setpoint for s in self.subservices if s.ac_connected and s.setpoint is not None))
 		except TypeError:
 			pass
 		return None
