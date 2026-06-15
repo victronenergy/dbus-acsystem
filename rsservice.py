@@ -106,7 +106,9 @@ class RsService(Client):
 		"/Ac/ActiveIn/ActiveInput",
 		"/Ess/AcPowerSetpoint", "/Ess/InverterPowerSetpoint",
 		"/Ess/DisableFeedIn", "/Ess/UseInverterPowerSetpoint",
-		"/Ess/BatteryDischargeSetpoint"
+		"/Ess/BatteryDischargeSetpoint",
+		"/Pv/L1/AcCoupledPower", "/Pv/L2/AcCoupledPower",
+		"/Pv/L3/AcCoupledPower"
 	}.union(synchronised_paths).union(alarm_settings).union(summaries)
 
 	def __init__(self, *args, **kwargs):

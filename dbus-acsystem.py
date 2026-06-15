@@ -184,6 +184,14 @@ class Service(_Service):
 		self.add_item(ForcedIntegerItem(self._set_inverter_setpoints,
 			"/Ess/InverterPowerSetpoint", None, writeable=True))
 
+		# AC-coupled PV power (proxied per phase to the unit on that phase)
+		for phase in range(1, 4):
+			path = f"/Pv/L{phase}/AcCoupledPower"
+			self.add_item(ForcedDoubleItem(
+				partial(self._set_ac_coupled_power, phase),
+				path, self._get_ac_coupled_power(phase),
+				writeable=True, text=format_w))
+
 		# Alarms
 		for p in RsService.alarm_settings:
 			self.add_item(IntegerItem(p, service.get_value(p),
@@ -320,6 +328,18 @@ class Service(_Service):
 		return reduce(lambda x, y: y if x is None else x+y,
 			(x for s in self.subservices if (x := s.battery_discharge_setpoint) is not None),
 			None)
+
+	def _get_ac_coupled_power(self, phase):
+		path = f"/Pv/L{phase}/AcCoupledPower"
+		values = [s.get_value(path) for s in self.subservices if s.seen(path)]
+		return sum(values) if values else None
+
+	def _set_ac_coupled_power(self, phase, v):
+		path = f"/Pv/L{phase}/AcCoupledPower"
+		for s in self.subservices:
+			if s.seen(path):
+				s.set_value_async(path, v)
+		return True
 
 	def add_service(self, service):
 		self.subservices.add(service)
