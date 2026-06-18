@@ -274,11 +274,12 @@ class Service(_Service):
 				ov = (r - share)
 		return True
 
-	def _set_customname(self, v):
+	async def _set_customname(self, item, v):
 		p = "/Settings/AcSystem/{}/CustomName".format(self.systeminstance)
 		cn = self.settings.get_value(p)
 		if cn != v:
-			self.settings.set_value_async(p, v)
+			await self.settings.set_value(p, v)
+		self.set_customname(v)
 		return True
 
 	def _add_device_info(self, service):
