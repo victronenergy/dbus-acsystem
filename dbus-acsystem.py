@@ -367,13 +367,13 @@ class Service(_Service):
 
 	async def init(self):
 		await self.wait_for_settings()
-		self.customname = self.settings.get_value(
-			"/Settings/AcSystem/{}/CustomName".format(self.systeminstance))
+		self.set_customname(self.settings.get_value(
+			"/Settings/AcSystem/{}/CustomName".format(self.systeminstance)))
 
 	def itemsChanged(self, service, values):
 		try:
-			self.customname = values[
-				"/Settings/AcSystem/{}/CustomName".format(self.systeminstance)]
+			self.set_customname(values[
+				"/Settings/AcSystem/{}/CustomName".format(self.systeminstance)])
 		except KeyError:
 			pass # Not a customname change
 
@@ -384,8 +384,7 @@ class Service(_Service):
 	def customname(self):
 		return self.get_item("/CustomName").value
 
-	@customname.setter
-	def customname(self, v):
+	def set_customname(self, v):
 		with self as s:
 			s["/CustomName"] = v or f"RS system ({self.systeminstance})"
 
