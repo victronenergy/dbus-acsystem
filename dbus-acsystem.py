@@ -387,7 +387,7 @@ class Service(_Service):
 
 	def set_customname(self, v):
 		with self as s:
-			s["/CustomName"] = v or f"RS system ({self.systeminstance})"
+			s["/CustomName"] = v or f"AC system ({self.systeminstance})"
 
 class SystemMonitor(Monitor):
 	synchronised_paths = RsService.synchronised_paths + RsService.alarm_settings
