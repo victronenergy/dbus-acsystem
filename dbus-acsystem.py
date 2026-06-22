@@ -95,7 +95,7 @@ class Service(_Service):
 
 		# Compulsory paths
 		self.add_item(IntegerItem("/ProductId", None))
-		self.add_item(TextItem("/ProductName", None))
+		self.add_item(TextItem("/ProductName", 'AC System'))
 		self.add_item(IntegerItem("/DeviceInstance",
 			512 if self.systeminstance is None else self.systeminstance))
 		self.add_item(TextItem("/Mgmt/ProcessName", __file__))
