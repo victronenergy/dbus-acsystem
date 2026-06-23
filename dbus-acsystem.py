@@ -42,7 +42,7 @@ def safe_max(*args):
 
 def safe_min(*args):
 	args = [x for x in args if x is not None]
-	return max(args) if args else None
+	return min(args) if args else None
 
 def safe_first(*args):
 	for a in args:
