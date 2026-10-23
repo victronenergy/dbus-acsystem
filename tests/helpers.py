@@ -30,6 +30,9 @@ class FakeBus:
 	def send(self, msg):
 		pass
 
+	def disconnect(self):
+		pass
+
 	async def connect(self):
 		return self
 

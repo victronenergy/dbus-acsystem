@@ -446,8 +446,11 @@ class SystemMonitor(Monitor):
 		for leader in list(self.leaders):
 			leader.remove_service(service)
 			if not leader.subservices:
-				leader.__del__()
+				# Release the dbus name before a replacement leader requests
+				# it, otherwise the new one is queued behind this stale one.
 				del self._leaders[leader.systeminstance]
+				await leader.close()
+				leader.bus.disconnect()
 
 	async def systemInstanceChanged(self, service):
 		await self.serviceRemoved(service)
